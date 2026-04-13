@@ -22,6 +22,9 @@ import StudentChapters from "@/pages/student/chapters";
 import StudentChapterView from "@/pages/student/chapter-view";
 import StudentQuizAttempt from "@/pages/student/quiz-attempt";
 import StudentResults from "@/pages/student/results";
+import About from "@/pages/about";
+import ClassesPublic from "@/pages/classes";
+import DemoContent from "@/pages/demo-content";
 import { useGetMe } from "@workspace/api-client-react";
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -109,7 +112,7 @@ function HomeRedirect() {
 function ProtectedAdmin({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Show when="signed-in">{children}</Show>
+      <Show when="signed-in"><AdminRoleGuard>{children}</AdminRoleGuard></Show>
       <Show when="signed-out"><Redirect to="/" /></Show>
     </>
   );
@@ -118,10 +121,31 @@ function ProtectedAdmin({ children }: { children: React.ReactNode }) {
 function ProtectedStudent({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Show when="signed-in">{children}</Show>
+      <Show when="signed-in"><StudentRoleGuard>{children}</StudentRoleGuard></Show>
       <Show when="signed-out"><Redirect to="/" /></Show>
     </>
   );
+}
+
+function LoadingGate() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>
+  );
+}
+
+function AdminRoleGuard({ children }: { children: React.ReactNode }) {
+  const { data: user, isLoading } = useGetMe();
+  if (isLoading) return <LoadingGate />;
+  const isAdmin = user?.role && ["CENTRAL", "STATE", "DISTRICT", "INSTITUTION"].includes(user.role);
+  return isAdmin ? <>{children}</> : <Redirect to="/student/dashboard" />;
+}
+
+function StudentRoleGuard({ children }: { children: React.ReactNode }) {
+  const { data: user, isLoading } = useGetMe();
+  if (isLoading) return <LoadingGate />;
+  return user?.role === "STUDENT" ? <>{children}</> : <Redirect to="/admin/dashboard" />;
 }
 
 function ClerkProviderWithRoutes() {
@@ -139,6 +163,9 @@ function ClerkProviderWithRoutes() {
           <ClerkQueryClientCacheInvalidator />
           <Switch>
             <Route path="/" component={HomeRedirect} />
+            <Route path="/about" component={About} />
+            <Route path="/classes" component={ClassesPublic} />
+            <Route path="/demo-content" component={DemoContent} />
             <Route path="/sign-in/*?" component={SignInPage} />
             <Route path="/sign-up/*?" component={SignUpPage} />
             <Route path="/admin/dashboard">{() => <ProtectedAdmin><AdminDashboard /></ProtectedAdmin>}</Route>

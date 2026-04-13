@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, chaptersTable, classesTable, contentTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
 import { ListChaptersQueryParams, ListChaptersResponse, CreateChapterBody, ListChaptersResponseItem, GetChapterParams, GetChapterResponse } from "@workspace/api-zod";
+import { adminRoles, requireRoles } from "../lib/authz";
 
 const router: IRouter = Router();
 
@@ -28,7 +29,7 @@ router.get("/chapters", requireAuth, async (req, res): Promise<void> => {
   res.json(ListChaptersResponse.parse(chapters));
 });
 
-router.post("/chapters", requireAuth, async (req, res): Promise<void> => {
+router.post("/chapters", requireAuth, requireRoles([...adminRoles]), async (req, res): Promise<void> => {
   const parsed = CreateChapterBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });

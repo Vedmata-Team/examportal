@@ -12,6 +12,7 @@ import {
   UpdateUserResponse,
 } from "@workspace/api-zod";
 import { clerkClient } from "@clerk/express";
+import { adminRoles, canCreateRole, requireCurrentUser, requireRoles, type UserRole } from "../lib/authz";
 
 const router: IRouter = Router();
 
@@ -43,7 +44,9 @@ router.get("/me", requireAuth, async (req, res): Promise<void> => {
   res.json(GetMeResponse.parse(user));
 });
 
-router.get("/users", requireAuth, async (req, res): Promise<void> => {
+router.get("/users", requireAuth, requireRoles([...adminRoles]), async (req, res): Promise<void> => {
+  const currentUser = await requireCurrentUser(req, res);
+  if (!currentUser) return;
   const params = ListUsersQueryParams.safeParse(req.query);
   const conditions = [];
 
@@ -53,6 +56,15 @@ router.get("/users", requireAuth, async (req, res): Promise<void> => {
   if (params.success && params.data.institutionId) {
     conditions.push(eq(usersTable.institutionId, params.data.institutionId));
   }
+  if (currentUser.role === "STATE" && currentUser.stateId) {
+    conditions.push(eq(usersTable.stateId, currentUser.stateId));
+  }
+  if (currentUser.role === "DISTRICT" && currentUser.districtId) {
+    conditions.push(eq(usersTable.districtId, currentUser.districtId));
+  }
+  if (currentUser.role === "INSTITUTION" && currentUser.institutionId) {
+    conditions.push(eq(usersTable.institutionId, currentUser.institutionId));
+  }
 
   const users = conditions.length > 0
     ? await db.select().from(usersTable).where(and(...conditions))
@@ -61,10 +73,31 @@ router.get("/users", requireAuth, async (req, res): Promise<void> => {
   res.json(ListUsersResponse.parse(users));
 });
 
-router.post("/users", requireAuth, async (req, res): Promise<void> => {
+router.post("/users", requireAuth, requireRoles([...adminRoles]), async (req, res): Promise<void> => {
+  const currentUser = await requireCurrentUser(req, res);
+  if (!currentUser) return;
+
   const parsed = CreateUserBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  if (!canCreateRole(currentUser, parsed.data.role as UserRole)) {
+    res.status(403).json({ error: "You do not have permission to create this role" });
+    return;
+  }
+
+  if (currentUser.role === "STATE" && currentUser.stateId && parsed.data.stateId !== currentUser.stateId) {
+    res.status(403).json({ error: "State admins can only create users in their state" });
+    return;
+  }
+  if (currentUser.role === "DISTRICT" && currentUser.districtId && parsed.data.districtId !== currentUser.districtId) {
+    res.status(403).json({ error: "District admins can only create users in their district" });
+    return;
+  }
+  if (currentUser.role === "INSTITUTION" && currentUser.institutionId && parsed.data.institutionId !== currentUser.institutionId) {
+    res.status(403).json({ error: "Institution admins can only create students in their institution" });
     return;
   }
 
@@ -94,7 +127,10 @@ router.post("/users", requireAuth, async (req, res): Promise<void> => {
   }
 });
 
-router.patch("/users/:id", requireAuth, async (req, res): Promise<void> => {
+router.patch("/users/:id", requireAuth, requireRoles([...adminRoles]), async (req, res): Promise<void> => {
+  const currentUser = await requireCurrentUser(req, res);
+  if (!currentUser) return;
+
   const params = UpdateUserParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -104,6 +140,11 @@ router.patch("/users/:id", requireAuth, async (req, res): Promise<void> => {
   const parsed = UpdateUserBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  if (parsed.data.role && !canCreateRole(currentUser, parsed.data.role as UserRole)) {
+    res.status(403).json({ error: "You do not have permission to assign this role" });
     return;
   }
 

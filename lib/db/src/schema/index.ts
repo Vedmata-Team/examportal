@@ -10,3 +10,4 @@ export * from "./quizSections";
 export * from "./questions";
 export * from "./examAttempts";
 export * from "./examAnswers";
+export * from "./readingProgress";

@@ -7,6 +7,7 @@ import {
   SubmitExamBody, SubmitExamResponse,
   ListExamAttemptsQueryParams, ListExamAttemptsResponse,
 } from "@workspace/api-zod";
+import { requireCurrentUser } from "../lib/authz";
 
 const router: IRouter = Router();
 
@@ -63,6 +64,9 @@ router.post("/exams/start", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.post("/exams/submit", requireAuth, async (req, res): Promise<void> => {
+  const user = await requireCurrentUser(req, res);
+  if (!user) return;
+
   const parsed = SubmitExamBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -75,17 +79,50 @@ router.post("/exams/submit", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  if (attempt.userId !== user.id) {
+    res.status(403).json({ error: "You cannot submit another student's attempt" });
+    return;
+  }
+
   if (attempt.status !== "IN_PROGRESS") {
     res.status(400).json({ error: "Exam already submitted" });
     return;
   }
 
+  const [quiz] = await db.select().from(quizzesTable).where(eq(quizzesTable.id, attempt.quizId));
+  if (!quiz) {
+    res.status(404).json({ error: "Quiz not found" });
+    return;
+  }
+
+  if (quiz.type === "NATIONAL") {
+    const now = new Date();
+    if ((quiz.startTime && now < quiz.startTime) || (quiz.endTime && now > quiz.endTime)) {
+      res.status(403).json({ error: "National test is outside the allowed time window" });
+      return;
+    }
+  }
+
+  const sections = await db.select().from(quizSectionsTable).where(eq(quizSectionsTable.quizId, attempt.quizId));
+  const allowedSeconds = sections.reduce((sum, section) => sum + section.timeLimit, 0);
+  const elapsedSeconds = Math.floor((Date.now() - attempt.startedAt.getTime()) / 1000);
+  const timedOut = allowedSeconds > 0 && elapsedSeconds > allowedSeconds + 15;
+
+  const validQuestions = new Map<number, typeof questionsTable.$inferSelect>();
+  for (const section of sections) {
+    const questions = await db.select().from(questionsTable).where(eq(questionsTable.sectionId, section.id));
+    questions.forEach((question) => validQuestions.set(question.id, question));
+  }
+
   let correctCount = 0;
+  const seenQuestions = new Set<number>();
 
   for (const answer of parsed.data.answers) {
-    const [question] = await db.select().from(questionsTable).where(eq(questionsTable.id, answer.questionId));
+    if (seenQuestions.has(answer.questionId)) continue;
+    seenQuestions.add(answer.questionId);
+    const question = validQuestions.get(answer.questionId);
     if (!question) continue;
-
+    if (answer.selectedOption < 0 || answer.selectedOption >= question.options.length) continue;
     const isCorrect = question.correctAnswer === answer.selectedOption;
     if (isCorrect) correctCount++;
 
@@ -105,7 +142,7 @@ router.post("/exams/submit", requireAuth, async (req, res): Promise<void> => {
       submittedAt: new Date(),
       score,
       correctAnswers: correctCount,
-      status: "SUBMITTED",
+      status: timedOut ? "TIMED_OUT" : "SUBMITTED",
     })
     .where(eq(examAttemptsTable.id, parsed.data.attemptId));
 
@@ -119,14 +156,9 @@ router.post("/exams/submit", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.get("/exams/attempts", requireAuth, async (req, res): Promise<void> => {
-  const clerkUserId = (req as any).clerkUserId;
+  const user = await requireCurrentUser(req, res);
+  if (!user) return;
   const params = ListExamAttemptsQueryParams.safeParse(req.query);
-
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkUserId));
-  if (!user) {
-    res.json([]);
-    return;
-  }
 
   const conditions = [eq(examAttemptsTable.userId, user.id)];
   if (params.success && params.data.quizId) {

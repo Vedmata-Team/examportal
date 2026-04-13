@@ -3,10 +3,13 @@ import { eq } from "drizzle-orm";
 import { db, districtsTable, statesTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
 import { ListDistrictsQueryParams, ListDistrictsResponse, CreateDistrictBody, ListDistrictsResponseItem } from "@workspace/api-zod";
+import { adminRoles, requireCurrentUser, requireRoles } from "../lib/authz";
 
 const router: IRouter = Router();
 
 router.get("/districts", requireAuth, async (req, res): Promise<void> => {
+  const currentUser = await requireCurrentUser(req, res);
+  if (!currentUser) return;
   const params = ListDistrictsQueryParams.safeParse(req.query);
 
   let query = db.select({
@@ -18,7 +21,9 @@ router.get("/districts", requireAuth, async (req, res): Promise<void> => {
   }).from(districtsTable)
     .leftJoin(statesTable, eq(districtsTable.stateId, statesTable.id));
 
-  if (params.success && params.data.stateId) {
+  if (currentUser.role === "STATE" && currentUser.stateId) {
+    query = query.where(eq(districtsTable.stateId, currentUser.stateId)) as any;
+  } else if (params.success && params.data.stateId) {
     query = query.where(eq(districtsTable.stateId, params.data.stateId)) as any;
   }
 
@@ -26,10 +31,18 @@ router.get("/districts", requireAuth, async (req, res): Promise<void> => {
   res.json(ListDistrictsResponse.parse(districts));
 });
 
-router.post("/districts", requireAuth, async (req, res): Promise<void> => {
+router.post("/districts", requireAuth, requireRoles(["CENTRAL", "STATE"]), async (req, res): Promise<void> => {
+  const currentUser = await requireCurrentUser(req, res);
+  if (!currentUser) return;
+
   const parsed = CreateDistrictBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  if (currentUser.role === "STATE" && currentUser.stateId !== parsed.data.stateId) {
+    res.status(403).json({ error: "State admins can only create districts in their state" });
     return;
   }
 

@@ -9,6 +9,7 @@ import {
   CreateQuizSectionBody,
   CreateQuestionBody,
 } from "@workspace/api-zod";
+import { adminRoles, requireRoles } from "../lib/authz";
 
 const router: IRouter = Router();
 
@@ -45,7 +46,7 @@ router.get("/quizzes", requireAuth, async (req, res): Promise<void> => {
   res.json(ListQuizzesResponse.parse(quizzes));
 });
 
-router.post("/quizzes", requireAuth, async (req, res): Promise<void> => {
+router.post("/quizzes", requireAuth, requireRoles([...adminRoles]), async (req, res): Promise<void> => {
   const parsed = CreateQuizBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -93,7 +94,7 @@ router.get("/quizzes/:id", requireAuth, async (req, res): Promise<void> => {
   res.json(GetQuizResponse.parse({ ...quiz, sections: sectionsWithQuestions }));
 });
 
-router.post("/quiz-sections", requireAuth, async (req, res): Promise<void> => {
+router.post("/quiz-sections", requireAuth, requireRoles([...adminRoles]), async (req, res): Promise<void> => {
   const parsed = CreateQuizSectionBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -104,7 +105,7 @@ router.post("/quiz-sections", requireAuth, async (req, res): Promise<void> => {
   res.status(201).json(section);
 });
 
-router.post("/questions", requireAuth, async (req, res): Promise<void> => {
+router.post("/questions", requireAuth, requireRoles([...adminRoles]), async (req, res): Promise<void> => {
   const parsed = CreateQuestionBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });

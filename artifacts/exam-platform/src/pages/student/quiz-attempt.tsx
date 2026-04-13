@@ -21,6 +21,7 @@ export default function StudentQuizAttempt({ quizId }: { quizId: number }) {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<{ score: number; totalQuestions: number; correctAnswers: number; percentage: number } | null>(null);
+  const [tabSwitches, setTabSwitches] = useState(0);
 
   const currentSection = quiz?.sections?.[currentSectionIdx];
   const totalSections = quiz?.sections?.length || 0;
@@ -47,6 +48,37 @@ export default function StudentQuizAttempt({ quizId }: { quizId: number }) {
     return () => clearInterval(interval);
   }, [timeRemaining, attemptId, submitted]);
 
+  useEffect(() => {
+    if (!attemptId || submitted) return;
+
+    const preventAction = (event: Event) => event.preventDefault();
+    const handleVisibility = () => {
+      if (document.hidden) {
+        setTabSwitches((count) => count + 1);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    document.addEventListener("copy", preventAction);
+    document.addEventListener("paste", preventAction);
+    document.addEventListener("cut", preventAction);
+    document.addEventListener("contextmenu", preventAction);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      document.removeEventListener("copy", preventAction);
+      document.removeEventListener("paste", preventAction);
+      document.removeEventListener("cut", preventAction);
+      document.removeEventListener("contextmenu", preventAction);
+    };
+  }, [attemptId, submitted]);
+
+  useEffect(() => {
+    if (tabSwitches >= 3 && attemptId && !submitted) {
+      handleSubmit();
+    }
+  }, [tabSwitches, attemptId, submitted]);
+
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -57,6 +89,7 @@ export default function StudentQuizAttempt({ quizId }: { quizId: number }) {
     startExam.mutate({ data: { quizId } }, {
       onSuccess: (data) => {
         setAttemptId(data.id);
+        document.documentElement.requestFullscreen?.().catch(() => undefined);
       },
     });
   };
@@ -131,7 +164,7 @@ export default function StudentQuizAttempt({ quizId }: { quizId: number }) {
             </div>
             <div className="flex items-center gap-2 p-3 bg-accent rounded text-xs text-accent-foreground">
               <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span>Once started, you cannot pause. Timer will auto-submit when it expires. You cannot go back to previous sections.</span>
+              <span>Once started, you cannot pause. Timer will auto-submit when it expires. You cannot go back to previous sections. Copy, paste, right click, and repeated tab switching are blocked.</span>
             </div>
             <Button onClick={handleStart} disabled={startExam.isPending} className="w-full" data-testid="button-start-exam">
               {startExam.isPending ? "Starting..." : "Start Exam"}
@@ -150,6 +183,11 @@ export default function StudentQuizAttempt({ quizId }: { quizId: number }) {
           <p className="text-xs text-muted-foreground">{currentSection?.title} ({currentSectionIdx + 1}/{totalSections})</p>
         </div>
         <div className="flex items-center gap-4">
+          {tabSwitches > 0 && (
+            <div className="text-xs text-destructive" data-testid="text-tab-switch-warning">
+              Tab switch warning {tabSwitches}/3
+            </div>
+          )}
           <div className={`flex items-center gap-1 font-mono text-sm ${timeRemaining <= 30 ? "text-destructive" : ""}`} data-testid="text-quiz-timer">
             <Clock className="h-4 w-4" />
             {formatTime(timeRemaining)}

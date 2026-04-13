@@ -13,6 +13,15 @@ export default function Home() {
             <span className="text-xl font-bold text-foreground" data-testid="text-brand">ExamPlatform</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/about">
+              <Button variant="ghost" data-testid="link-about">About</Button>
+            </Link>
+            <Link href="/classes">
+              <Button variant="ghost" data-testid="link-classes">Classes</Button>
+            </Link>
+            <Link href="/demo-content">
+              <Button variant="ghost" data-testid="link-demo-content">Demo</Button>
+            </Link>
             <Link href="/sign-in">
               <Button variant="outline" data-testid="link-sign-in">Sign In</Button>
             </Link>
