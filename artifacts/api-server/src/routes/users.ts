@@ -13,10 +13,22 @@ import {
 } from "@workspace/api-zod";
 import { clerkClient } from "@clerk/express";
 import { adminRoles, canCreateRole, requireCurrentUser, requireRoles, type UserRole } from "../lib/authz";
+import { hashPassword } from "../lib/localAuth";
 
 const router: IRouter = Router();
 
 router.get("/me", requireAuth, async (req, res): Promise<void> => {
+  const localUserId = (req as any).localUserId;
+  if (typeof localUserId === "number") {
+    const [localUser] = await db.select().from(usersTable).where(eq(usersTable.id, localUserId));
+    if (!localUser) {
+      res.status(401).json({ error: "User profile not found" });
+      return;
+    }
+    res.json(GetMeResponse.parse(localUser));
+    return;
+  }
+
   const clerkUserId = (req as any).clerkUserId;
 
   let [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkUserId));
@@ -102,6 +114,23 @@ router.post("/users", requireAuth, requireRoles([...adminRoles]), async (req, re
   }
 
   try {
+    if (!process.env.CLERK_SECRET_KEY) {
+      const [user] = await db.insert(usersTable).values({
+        clerkId: `local:${parsed.data.email}`,
+        name: parsed.data.name,
+        email: parsed.data.email,
+        passwordHash: hashPassword("TempPass123!"),
+        role: parsed.data.role as any,
+        stateId: parsed.data.stateId ?? null,
+        districtId: parsed.data.districtId ?? null,
+        institutionId: parsed.data.institutionId ?? null,
+        classId: parsed.data.classId ?? null,
+      }).returning();
+
+      res.status(201).json(GetMeResponse.parse(user));
+      return;
+    }
+
     const clerkUser = await (await clerkClient()).users.createUser({
       emailAddress: [parsed.data.email],
       firstName: parsed.data.name.split(" ")[0],

@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, sql } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import { clearSessionCookie, hashPassword, setSessionCookie, verifyPassword } from "../lib/localAuth";
+import { GetMeResponse } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
@@ -38,7 +39,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   }).returning();
 
   setSessionCookie(res, user.id);
-  res.status(201).json(user);
+  res.status(201).json(GetMeResponse.parse(user));
 });
 
 router.post("/auth/login", async (req, res): Promise<void> => {
@@ -52,7 +53,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   }
 
   setSessionCookie(res, user.id);
-  res.json(user);
+  res.json(GetMeResponse.parse(user));
 });
 
 router.post("/auth/logout", (_req, res): void => {

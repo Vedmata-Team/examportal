@@ -7,6 +7,12 @@ export type AdminRole = typeof adminRoles[number];
 export type UserRole = AdminRole | "STUDENT";
 
 export async function getCurrentUser(req: Request): Promise<User | null> {
+  const localUserId = (req as any).localUserId;
+  if (typeof localUserId === "number") {
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, localUserId));
+    return user ?? null;
+  }
+
   const clerkUserId = (req as any).clerkUserId;
   if (!clerkUserId) return null;
   const [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkUserId));

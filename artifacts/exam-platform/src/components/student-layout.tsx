@@ -1,7 +1,8 @@
 import { Link, useLocation } from "wouter";
-import { useClerk, useUser } from "@clerk/react";
-import { LayoutDashboard, BookOpen, ClipboardList, Award, LogOut } from "lucide-react";
+import { LayoutDashboard, BookOpen, Award, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useGetMe } from "@workspace/api-client-react";
+import { queryClient } from "@/lib/queryClient";
 
 const navItems = [
   { href: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -10,9 +11,14 @@ const navItems = [
 ];
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
-  const { signOut } = useClerk();
-  const { user } = useUser();
+  const [location, setLocation] = useLocation();
+  const { data: user } = useGetMe();
+
+  async function signOut() {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => undefined);
+    queryClient.clear();
+    setLocation("/");
+  }
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -45,7 +51,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         </nav>
         <div className="p-3 border-t border-sidebar-border">
           <div className="px-3 py-2 text-sm text-muted-foreground mb-2 truncate" data-testid="text-student-email">
-            {user?.emailAddresses?.[0]?.emailAddress}
+            {user?.email}
           </div>
           <Button
             variant="ghost"
