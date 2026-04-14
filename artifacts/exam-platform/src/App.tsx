@@ -30,7 +30,14 @@ import { useGetMe } from "@workspace/api-client-react";
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-const hasClerk = Boolean(clerkPubKey);
+
+const hasValidClerkKey = Boolean(
+  clerkPubKey && 
+  clerkPubKey.startsWith("pk_") && 
+  !clerkPubKey.includes("PLACEHOLDER")
+);
+
+const hasClerk = hasValidClerkKey;
 
 function stripBase(path: string): string {
   return basePath && path.startsWith(basePath)
@@ -298,7 +305,12 @@ function AppRoutes() {
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
 
-  if (!hasClerk) return <AppRoutes />;
+  if (!hasClerk) {
+    if (clerkPubKey && !hasValidClerkKey) {
+      console.warn("Clerk Publishable Key is present but invalid/placeholder. Authentication features will be disabled.");
+    }
+    return <AppRoutes />;
+  }
 
   return (
     <ClerkProvider

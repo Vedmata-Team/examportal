@@ -34,7 +34,15 @@ app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-if (process.env.CLERK_SECRET_KEY && process.env.VITE_CLERK_PUBLISHABLE_KEY) {
+const hasClerkKeys = Boolean(
+  process.env.CLERK_SECRET_KEY &&
+    !process.env.CLERK_SECRET_KEY.includes("PLACEHOLDER") &&
+    process.env.VITE_CLERK_PUBLISHABLE_KEY &&
+    !process.env.VITE_CLERK_PUBLISHABLE_KEY.includes("PLACEHOLDER") &&
+    process.env.VITE_CLERK_PUBLISHABLE_KEY.startsWith("pk_"),
+);
+
+if (hasClerkKeys) {
   app.use(clerkMiddleware());
 }
 
