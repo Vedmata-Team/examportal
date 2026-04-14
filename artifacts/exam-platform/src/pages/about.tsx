@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import { BookOpen, Shield, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function About() {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>About Us | ExamPlatform - India's Online Exam Solution</title>
+        <meta name="description" content="Learn more about ExamPlatform, a secure and hierarchical online examination system designed for the Indian education ecosystem, from central administration to student learning." />
+      </Helmet>
       <header className="border-b bg-card">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/"><span className="text-xl font-bold cursor-pointer">ExamPlatform</span></Link>

@@ -15,6 +15,7 @@ export const examAttemptsTable = pgTable("exam_attempts", {
   score: integer("score"),
   totalQuestions: integer("total_questions").notNull().default(0),
   correctAnswers: integer("correct_answers"),
+  tabSwitches: integer("tab_switches").notNull().default(0),
   status: attemptStatusEnum("status").notNull().default("IN_PROGRESS"),
 });
 

@@ -217,7 +217,8 @@ export const CreateQuizBodyType = {
 
 export interface CreateQuizBody {
   title: string;
-  chapterId: number;
+  chapterId?: number | null;
+  chapterIds?: number[];
   type: CreateQuizBodyType;
   /** @nullable */
   startTime?: string | null;
@@ -323,6 +324,7 @@ export interface AnswerItem {
 
 export interface SubmitExamBody {
   attemptId: number;
+  tabSwitches?: number;
   answers: AnswerItem[];
 }
 

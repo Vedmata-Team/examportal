@@ -192,7 +192,7 @@ function RoleRouter() {
 }
 
 function HomeRedirect() {
-  const { data: user, isLoading } = useGetMe({ query: { retry: false } });
+  const { data: user, isLoading } = useGetMe({ query: { retry: false } as any });
   if (!hasClerk) {
     if (isLoading) return <LoadingGate />;
     return user ? <RoleRouter /> : <Home />;
@@ -253,38 +253,45 @@ function StudentRoleGuard({ children }: { children: React.ReactNode }) {
   return user?.role === "STUDENT" ? <>{children}</> : <Redirect to="/admin/dashboard" />;
 }
 
+import { HelmetProvider } from "react-helmet-async";
+
+import StudentReview from "@/pages/student/review";
+
 function AppRoutes() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        {hasClerk && <ClerkQueryClientCacheInvalidator />}
-        <Switch>
-          <Route path="/" component={HomeRedirect} />
-          <Route path="/about" component={About} />
-          <Route path="/classes" component={ClassesPublic} />
-          <Route path="/demo-content" component={DemoContent} />
-          <Route path="/sign-in/*?" component={SignInPage} />
-          <Route path="/sign-up/*?" component={SignUpPage} />
-          <Route path="/admin/dashboard">{() => <ProtectedAdmin><AdminDashboard /></ProtectedAdmin>}</Route>
-          <Route path="/admin/states">{() => <ProtectedAdmin><AdminStates /></ProtectedAdmin>}</Route>
-          <Route path="/admin/districts">{() => <ProtectedAdmin><AdminDistricts /></ProtectedAdmin>}</Route>
-          <Route path="/admin/institutions">{() => <ProtectedAdmin><AdminInstitutions /></ProtectedAdmin>}</Route>
-          <Route path="/admin/users">{() => <ProtectedAdmin><AdminUsers /></ProtectedAdmin>}</Route>
-          <Route path="/admin/classes">{() => <ProtectedAdmin><AdminClasses /></ProtectedAdmin>}</Route>
-          <Route path="/admin/chapters">{() => <ProtectedAdmin><AdminChapters /></ProtectedAdmin>}</Route>
-          <Route path="/admin/content/:chapterId">{(params) => <ProtectedAdmin><AdminContent chapterId={Number(params.chapterId)} /></ProtectedAdmin>}</Route>
-          <Route path="/admin/quizzes">{() => <ProtectedAdmin><AdminQuizzes /></ProtectedAdmin>}</Route>
-          <Route path="/admin/quiz/:id">{(params) => <ProtectedAdmin><AdminQuizDetail quizId={Number(params.id)} /></ProtectedAdmin>}</Route>
-          <Route path="/student/dashboard">{() => <ProtectedStudent><StudentDashboard /></ProtectedStudent>}</Route>
-          <Route path="/student/chapters">{() => <ProtectedStudent><StudentChapters /></ProtectedStudent>}</Route>
-          <Route path="/student/chapter/:id">{(params) => <ProtectedStudent><StudentChapterView chapterId={Number(params.id)} /></ProtectedStudent>}</Route>
-          <Route path="/student/quiz/:id">{(params) => <ProtectedStudent><StudentQuizAttempt quizId={Number(params.id)} /></ProtectedStudent>}</Route>
-          <Route path="/student/results">{() => <ProtectedStudent><StudentResults /></ProtectedStudent>}</Route>
-          <Route component={NotFound} />
-        </Switch>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          {hasClerk && <ClerkQueryClientCacheInvalidator />}
+          <Switch>
+            <Route path="/" component={HomeRedirect} />
+            <Route path="/about" component={About} />
+            <Route path="/classes" component={ClassesPublic} />
+            <Route path="/demo-content" component={DemoContent} />
+            <Route path="/sign-in/*?" component={SignInPage} />
+            <Route path="/sign-up/*?" component={SignUpPage} />
+            <Route path="/admin/dashboard">{() => <ProtectedAdmin><AdminDashboard /></ProtectedAdmin>}</Route>
+            <Route path="/admin/states">{() => <ProtectedAdmin><AdminStates /></ProtectedAdmin>}</Route>
+            <Route path="/admin/districts">{() => <ProtectedAdmin><AdminDistricts /></ProtectedAdmin>}</Route>
+            <Route path="/admin/institutions">{() => <ProtectedAdmin><AdminInstitutions /></ProtectedAdmin>}</Route>
+            <Route path="/admin/users">{() => <ProtectedAdmin><AdminUsers /></ProtectedAdmin>}</Route>
+            <Route path="/admin/classes">{() => <ProtectedAdmin><AdminClasses /></ProtectedAdmin>}</Route>
+            <Route path="/admin/chapters">{() => <ProtectedAdmin><AdminChapters /></ProtectedAdmin>}</Route>
+            <Route path="/admin/content/:chapterId">{(params) => <ProtectedAdmin><AdminContent chapterId={Number(params.chapterId)} /></ProtectedAdmin>}</Route>
+            <Route path="/admin/quizzes">{() => <ProtectedAdmin><AdminQuizzes /></ProtectedAdmin>}</Route>
+            <Route path="/admin/quiz/:id">{(params) => <ProtectedAdmin><AdminQuizDetail quizId={Number(params.id)} /></ProtectedAdmin>}</Route>
+            <Route path="/student/dashboard">{() => <ProtectedStudent><StudentDashboard /></ProtectedStudent>}</Route>
+            <Route path="/student/chapters">{() => <ProtectedStudent><StudentChapters /></ProtectedStudent>}</Route>
+            <Route path="/student/chapter/:id">{(params) => <ProtectedStudent><StudentChapterView chapterId={Number(params.id)} /></ProtectedStudent>}</Route>
+            <Route path="/student/quiz/:id">{(params) => <ProtectedStudent><StudentQuizAttempt quizId={Number(params.id)} /></ProtectedStudent>}</Route>
+            <Route path="/student/results">{() => <ProtectedStudent><StudentResults /></ProtectedStudent>}</Route>
+            <Route path="/student/review/:id">{(params) => <ProtectedStudent><StudentReview /></ProtectedStudent>}</Route>
+            <Route component={NotFound} />
+          </Switch>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
   );
 }
 

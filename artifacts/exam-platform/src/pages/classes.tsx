@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import { BookOpen, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,10 @@ const classGroups = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Cl
 export default function ClassesPublic() {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Classes & Courses | ExamPlatform</title>
+        <meta name="description" content="Explore class-wise quiz platforms and online exam modules available for various educational levels in India." />
+      </Helmet>
       <header className="border-b bg-card">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/"><span className="text-xl font-bold cursor-pointer">ExamPlatform</span></Link>

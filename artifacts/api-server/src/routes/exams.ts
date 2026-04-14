@@ -142,6 +142,7 @@ router.post("/exams/submit", requireAuth, async (req, res): Promise<void> => {
       submittedAt: new Date(),
       score,
       correctAnswers: correctCount,
+      tabSwitches: parsed.data.tabSwitches || 0,
       status: timedOut ? "TIMED_OUT" : "SUBMITTED",
     })
     .where(eq(examAttemptsTable.id, parsed.data.attemptId));
@@ -182,6 +183,48 @@ router.get("/exams/attempts", requireAuth, async (req, res): Promise<void> => {
     .orderBy(examAttemptsTable.startedAt);
 
   res.json(ListExamAttemptsResponse.parse(attempts));
+});
+
+router.get("/exams/attempts/:id", requireAuth, async (req, res): Promise<void> => {
+  const user = await requireCurrentUser(req, res);
+  if (!user) return;
+
+  const attemptId = Number(req.params.id);
+  const [attempt] = await db.select({
+    id: examAttemptsTable.id,
+    userId: examAttemptsTable.userId,
+    quizId: examAttemptsTable.quizId,
+    quizTitle: quizzesTable.title,
+    startedAt: examAttemptsTable.startedAt,
+    submittedAt: examAttemptsTable.submittedAt,
+    score: examAttemptsTable.score,
+    totalQuestions: examAttemptsTable.totalQuestions,
+    correctAnswers: examAttemptsTable.correctAnswers,
+    tabSwitches: examAttemptsTable.tabSwitches,
+    status: examAttemptsTable.status,
+  }).from(examAttemptsTable)
+    .leftJoin(quizzesTable, eq(examAttemptsTable.quizId, quizzesTable.id))
+    .where(eq(examAttemptsTable.id, attemptId));
+
+  if (!attempt) {
+    res.status(404).json({ error: "Attempt not found" });
+    return;
+  }
+
+  if (attempt.userId !== user.id) {
+    res.status(403).json({ error: "Access denied" });
+    return;
+  }
+
+  const answers = await db.select().from(examAnswersTable).where(eq(examAnswersTable.attemptId, attemptId));
+  const detailedAnswers = await Promise.all(
+    answers.map(async (a) => {
+      const [q] = await db.select().from(questionsTable).where(eq(questionsTable.id, a.questionId));
+      return { ...a, question: q };
+    })
+  );
+
+  res.json({ ...attempt, answers: detailedAnswers });
 });
 
 export default router;

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, sql } from "drizzle-orm";
-import { db, quizzesTable, chaptersTable, quizSectionsTable, questionsTable } from "@workspace/db";
+import { db, quizzesTable, chaptersTable, quizSectionsTable, questionsTable, quizChaptersTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
 import {
   ListQuizzesQueryParams, ListQuizzesResponse,
@@ -53,16 +53,35 @@ router.post("/quizzes", requireAuth, requireRoles([...adminRoles]), async (req, 
     return;
   }
 
+  const primaryChapterId = parsed.data.chapterId ?? parsed.data.chapterIds?.[0] ?? null;
+
   const [quiz] = await db.insert(quizzesTable).values({
     title: parsed.data.title,
-    chapterId: parsed.data.chapterId,
+    chapterId: primaryChapterId,
     type: parsed.data.type as any,
     startTime: parsed.data.startTime ? new Date(parsed.data.startTime) : null,
     endTime: parsed.data.endTime ? new Date(parsed.data.endTime) : null,
   }).returning();
 
-  const [chapter] = await db.select().from(chaptersTable).where(eq(chaptersTable.id, quiz.chapterId));
-  res.status(201).json(ListQuizzesResponseItem.parse({ ...quiz, chapterTitle: chapter?.title, totalQuestions: 0 }));
+  if (parsed.data.chapterIds && parsed.data.chapterIds.length > 0) {
+    await db.insert(quizChaptersTable).values(
+      parsed.data.chapterIds.map((cId) => ({
+        quizId: quiz.id,
+        chapterId: cId,
+      }))
+    );
+  } else if (primaryChapterId) {
+    await db.insert(quizChaptersTable).values({
+      quizId: quiz.id,
+      chapterId: primaryChapterId,
+    });
+  }
+
+  const [chapter] = primaryChapterId 
+    ? await db.select().from(chaptersTable).where(eq(chaptersTable.id, primaryChapterId))
+    : [null];
+    
+  res.status(201).json(ListQuizzesResponseItem.parse({ ...quiz, chapterTitle: chapter?.title ?? "Multi-Chapter", totalQuestions: 0 }));
 });
 
 router.get("/quizzes/:id", requireAuth, async (req, res): Promise<void> => {

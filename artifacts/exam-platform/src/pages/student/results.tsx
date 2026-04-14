@@ -1,5 +1,7 @@
 import StudentLayout from "@/components/student-layout";
+import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useListExamAttempts } from "@workspace/api-client-react";
@@ -25,6 +27,7 @@ export default function StudentResults() {
                     <TableHead>Score</TableHead>
                     <TableHead>Questions</TableHead>
                     <TableHead>Date</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -45,11 +48,18 @@ export default function StudentResults() {
                       </TableCell>
                       <TableCell>{a.score != null ? `${a.score}%` : "-"}</TableCell>
                       <TableCell>{a.correctAnswers != null ? `${a.correctAnswers}/${a.totalQuestions}` : `-/${a.totalQuestions}`}</TableCell>
-                      <TableCell>{new Date(a.startedAt).toLocaleString()}</TableCell>
+                      <TableCell>{new Date(a.startedAt).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Link href={`/student/review/${a.id}`}>
+                          <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 hover:bg-primary/5">
+                            Review
+                          </Button>
+                        </Link>
+                      </TableCell>
                     </TableRow>
                   ))}
                   {(!attempts || attempts.length === 0) && (
-                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No results yet. Take a quiz to see your scores here.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No results yet. Take a quiz to see your scores here.</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>

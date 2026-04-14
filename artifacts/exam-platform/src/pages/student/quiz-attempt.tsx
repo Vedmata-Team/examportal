@@ -101,7 +101,7 @@ export default function StudentQuizAttempt({ quizId }: { quizId: number }) {
       selectedOption: opt,
     }));
 
-    submitExam.mutate({ data: { attemptId, answers: answerList } }, {
+    submitExam.mutate({ data: { attemptId, answers: answerList, tabSwitches } }, {
       onSuccess: (data) => {
         setSubmitted(true);
         setResult(data);
@@ -166,7 +166,38 @@ export default function StudentQuizAttempt({ quizId }: { quizId: number }) {
               <AlertTriangle className="h-4 w-4 shrink-0" />
               <span>Once started, you cannot pause. Timer will auto-submit when it expires. You cannot go back to previous sections. Copy, paste, right click, and repeated tab switching are blocked.</span>
             </div>
-            <Button onClick={handleStart} disabled={startExam.isPending} className="w-full" data-testid="button-start-exam">
+            {quiz?.type === "NATIONAL" && (() => {
+              const now = new Date();
+              const start = quiz.startTime ? new Date(quiz.startTime) : null;
+              const end = quiz.endTime ? new Date(quiz.endTime) : null;
+              if (start && now < start) {
+                return (
+                  <div className="p-3 bg-blue-50 text-blue-800 rounded text-xs text-center border border-blue-200">
+                    Live Test scheduled for: {start.toLocaleString()}
+                  </div>
+                );
+              }
+              if (end && now > end) {
+                return (
+                  <div className="p-3 bg-red-50 text-red-800 rounded text-xs text-center border border-red-200">
+                    This live test has ended.
+                  </div>
+                );
+              }
+              return null;
+            })()}
+            <Button
+              onClick={handleStart}
+              disabled={
+                startExam.isPending || 
+                !!(quiz?.type === "NATIONAL" && (
+                  (quiz.startTime && new Date() < new Date(quiz.startTime)) || 
+                  (quiz.endTime && new Date() > new Date(quiz.endTime))
+                ))
+              }
+              className="w-full"
+              data-testid="button-start-exam"
+            >
               {startExam.isPending ? "Starting..." : "Start Exam"}
             </Button>
           </CardContent>

@@ -35,7 +35,7 @@ router.get("/me", requireAuth, async (req, res): Promise<void> => {
 
   if (!user) {
     try {
-      const clerkUser = await (await clerkClient()).users.getUser(clerkUserId);
+      const clerkUser = await clerkClient.users.getUser(clerkUserId);
       const email = clerkUser.emailAddresses?.[0]?.emailAddress || "";
       const name = `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || email;
 
@@ -131,7 +131,7 @@ router.post("/users", requireAuth, requireRoles([...adminRoles]), async (req, re
       return;
     }
 
-    const clerkUser = await (await clerkClient()).users.createUser({
+    const clerkUser = await clerkClient.users.createUser({
       emailAddress: [parsed.data.email],
       firstName: parsed.data.name.split(" ")[0],
       lastName: parsed.data.name.split(" ").slice(1).join(" ") || undefined,

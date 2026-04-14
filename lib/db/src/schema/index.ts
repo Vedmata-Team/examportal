@@ -8,6 +8,7 @@ export * from "./content";
 export * from "./quizzes";
 export * from "./quizSections";
 export * from "./questions";
+export * from "./quizChapters";
 export * from "./examAttempts";
 export * from "./examAnswers";
 export * from "./readingProgress";

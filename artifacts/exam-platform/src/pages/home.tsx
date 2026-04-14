@@ -1,3 +1,6 @@
+import { Helmet } from "react-helmet-async";
+import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { BookOpen, Award, Shield, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +9,11 @@ import { Card, CardContent } from "@/components/ui/card";
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>ExamPlatform | India's Smart Exam & Learning System</title>
+        <meta name="description" content="A comprehensive platform for educational institutions to manage hierarchical administration, deliver timed quizzes, and track student performance across the nation. Free mock tests and class-wise quizzes available." />
+        <meta name="keywords" content="online exam system, mock test india, class-wise quiz platform, exam portal, institutional management" />
+      </Helmet>
       <header className="border-b bg-card">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -32,19 +40,54 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6" data-testid="text-hero-title">
-            India's Smart Exam & Learning Platform
-          </h1>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto" data-testid="text-hero-description">
-            A comprehensive platform for educational institutions to manage hierarchical administration, deliver timed quizzes, and track student performance across the nation.
-          </p>
-          <Link href="/sign-up">
-            <Button size="lg" className="text-lg px-8" data-testid="button-cta">
-              Start Free Today
-            </Button>
-          </Link>
+      <section className="relative py-24 px-4 overflow-hidden">
+        {/* Background Decorative Elements */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 opacity-30 pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 blur-[120px] rounded-full" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/20 blur-[120px] rounded-full" />
+        </div>
+
+        <div className="max-w-5xl mx-auto text-center space-y-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Badge variant="outline" className="px-4 py-1 border-primary/20 bg-primary/5 text-primary rounded-full mb-6">
+              New: Live National Tests Scheduled for 2026
+            </Badge>
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-foreground leading-[1.1]" data-testid="text-hero-title">
+              India's Most <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-orange-400">Advanced</span> Exam Platform
+            </h1>
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+            data-testid="text-hero-description"
+          >
+            Empowering institutions with hierarchical management, secure high-stakes exams, and data-driven student performance analytics.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          >
+            <Link href="/sign-up">
+              <Button size="lg" className="h-14 px-10 text-lg font-semibold shadow-lg shadow-primary/20" data-testid="button-cta">
+                Get Started for Free
+              </Button>
+            </Link>
+            <Link href="/demo-content">
+              <Button variant="outline" size="lg" className="h-14 px-10 text-lg font-semibold" data-testid="button-demo">
+                Explore Demo
+              </Button>
+            </Link>
+          </motion.div>
         </div>
       </section>
 

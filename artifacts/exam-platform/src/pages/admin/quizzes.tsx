@@ -22,18 +22,30 @@ export default function AdminQuizzes() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [chapterId, setChapterId] = useState("");
+  const [chapterIds, setChapterIds] = useState<number[]>([]);
   const [type, setType] = useState<string>("CHAPTER");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
 
   const handleCreate = () => {
-    if (!title || !chapterId) return;
-    createQuiz.mutate({ data: { title, chapterId: Number(chapterId), type: type as any } }, {
+    if (!title || (type !== "NATIONAL" && chapterIds.length === 0)) return;
+    createQuiz.mutate({
+      data: {
+        title,
+        chapterIds,
+        type: type as any,
+        startTime: startTime ? new Date(startTime).toISOString() : undefined,
+        endTime: endTime ? new Date(endTime).toISOString() : undefined,
+      }
+    }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListQuizzesQueryKey() });
         setOpen(false);
         setTitle("");
-        setChapterId("");
+        setChapterIds([]);
         setType("CHAPTER");
+        setStartTime("");
+        setEndTime("");
       },
     });
   };
@@ -59,15 +71,37 @@ export default function AdminQuizzes() {
               <DialogHeader><DialogTitle>Add New Quiz</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div><Label>Quiz Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Chapter 1 Test" data-testid="input-quiz-title" /></div>
-                <div>
-                  <Label>Chapter</Label>
-                  <Select value={chapterId} onValueChange={setChapterId}>
-                    <SelectTrigger data-testid="select-quiz-chapter"><SelectValue placeholder="Select chapter" /></SelectTrigger>
-                    <SelectContent>
-                      {chapters?.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.title}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {type !== "NATIONAL" && (
+                  <div>
+                    <Label>{type === "CHAPTER" ? "Chapter" : "Chapters"}</Label>
+                    <div className="border rounded-md p-2 mt-1 max-h-[200px] overflow-y-auto space-y-1">
+                      {chapters?.map((c) => (
+                        <div key={c.id} className="flex items-center gap-2 px-2 py-1 hover:bg-muted rounded cursor-pointer" onClick={() => {
+                          if (type === "CHAPTER") {
+                            setChapterIds([c.id]);
+                          } else {
+                            setChapterIds(prev => prev.includes(c.id) ? prev.filter(id => id !== c.id) : [...prev, c.id]);
+                          }
+                        }}>
+                          <input type="checkbox" checked={chapterIds.includes(c.id)} readOnly className="rounded border-gray-300 text-primary focus:ring-primary" />
+                          <span className="text-sm">{c.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {chapterIds.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {chapterIds.map(id => {
+                          const chapter = chapters?.find(c => c.id === id);
+                          return (
+                            <Badge key={id} variant="secondary" className="text-[10px] py-0 h-5">
+                              {chapter?.title}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div>
                   <Label>Type</Label>
                   <Select value={type} onValueChange={setType}>
@@ -77,6 +111,28 @@ export default function AdminQuizzes() {
                     </SelectContent>
                   </Select>
                 </div>
+                {type === "NATIONAL" && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Start Time</Label>
+                      <Input
+                        type="datetime-local"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        data-testid="input-quiz-start-time"
+                      />
+                    </div>
+                    <div>
+                      <Label>End Time</Label>
+                      <Input
+                        type="datetime-local"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        data-testid="input-quiz-end-time"
+                      />
+                    </div>
+                  </div>
+                )}
                 <Button onClick={handleCreate} disabled={createQuiz.isPending} className="w-full" data-testid="button-submit-quiz">
                   {createQuiz.isPending ? "Creating..." : "Create Quiz"}
                 </Button>

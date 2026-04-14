@@ -291,7 +291,8 @@ export const ListQuizzesResponse = zod.array(ListQuizzesResponseItem);
  */
 export const CreateQuizBody = zod.object({
   title: zod.string(),
-  chapterId: zod.number(),
+  chapterId: zod.number().nullish(),
+  chapterIds: zod.array(zod.number()).optional(),
   type: zod.enum(["CHAPTER", "MOCK", "NATIONAL"]),
   startTime: zod.coerce.date().nullish(),
   endTime: zod.coerce.date().nullish(),
@@ -365,6 +366,7 @@ export const StartExamBody = zod.object({
  */
 export const SubmitExamBody = zod.object({
   attemptId: zod.number(),
+  tabSwitches: zod.number().optional(),
   answers: zod.array(
     zod.object({
       questionId: zod.number(),
@@ -401,6 +403,34 @@ export const ListExamAttemptsResponseItem = zod.object({
   status: zod.enum(["IN_PROGRESS", "SUBMITTED", "TIMED_OUT"]),
 });
 export const ListExamAttemptsResponse = zod.array(ListExamAttemptsResponseItem);
+
+export const GetExamAttemptResponse = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  quizId: zod.number(),
+  quizTitle: zod.string().optional(),
+  startedAt: zod.coerce.date(),
+  submittedAt: zod.coerce.date().nullish(),
+  score: zod.number().nullish(),
+  totalQuestions: zod.number(),
+  correctAnswers: zod.number().nullish(),
+  tabSwitches: zod.number(),
+  status: zod.enum(["IN_PROGRESS", "SUBMITTED", "TIMED_OUT"]),
+  answers: zod.array(
+    zod.object({
+      id: zod.number(),
+      questionId: zod.number(),
+      selectedOption: zod.number(),
+      isCorrect: zod.boolean(),
+      question: zod.object({
+        id: zod.number(),
+        question: zod.string(),
+        options: zod.array(zod.string()),
+        correctAnswer: zod.number(),
+      }),
+    }),
+  ),
+});
 
 /**
  * @summary Admin dashboard summary

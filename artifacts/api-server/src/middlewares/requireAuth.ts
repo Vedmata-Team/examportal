@@ -21,7 +21,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
   let userId: string | null | undefined;
   if (process.env.CLERK_SECRET_KEY && process.env.VITE_CLERK_PUBLISHABLE_KEY) {
     const auth = getAuth(req);
-    userId = auth?.sessionClaims?.userId || auth?.userId;
+    userId = (auth?.sessionClaims as any)?.userId || auth?.userId;
   }
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });

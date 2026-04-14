@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { CKEditor } from "@ckeditor/ckeditor5-react";
+import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import AdminLayout from "@/components/admin-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,14 +56,20 @@ export default function AdminContent({ chapterId }: { chapterId: number }) {
               <DialogHeader><DialogTitle>Add Content Section</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label>HTML Content</Label>
-                  <Textarea
-                    value={htmlContent}
-                    onChange={(e) => setHtmlContent(e.target.value)}
-                    placeholder="Enter HTML content here..."
-                    className="min-h-[200px] font-mono text-sm"
-                    data-testid="input-html-content"
-                  />
+                  <Label className="mb-2 block">HTML Content</Label>
+                  <div className="prose-none max-w-full border rounded-md overflow-hidden bg-background">
+                    <CKEditor
+                      editor={ClassicEditor}
+                      data={htmlContent}
+                      onChange={(_: any, editor: any) => {
+                        const data = editor.getData();
+                        setHtmlContent(data);
+                      }}
+                      config={{
+                        placeholder: "Enter content here...",
+                      }}
+                    />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div><Label>Min Read Time (seconds)</Label><Input type="number" value={minReadTime} onChange={(e) => setMinReadTime(e.target.value)} data-testid="input-read-time" /></div>

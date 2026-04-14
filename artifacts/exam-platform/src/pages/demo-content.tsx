@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import { Clock, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function DemoContent() {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Demo Content | ExamPlatform Preview</title>
+        <meta name="description" content="Preview the student experience on ExamPlatform with our demo content, featuring timed reading and smart quiz interfaces." />
+      </Helmet>
       <header className="border-b bg-card">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/"><span className="text-xl font-bold cursor-pointer">ExamPlatform</span></Link>

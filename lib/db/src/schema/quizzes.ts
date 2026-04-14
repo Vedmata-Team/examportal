@@ -8,7 +8,7 @@ export const quizTypeEnum = pgEnum("quiz_type", ["CHAPTER", "MOCK", "NATIONAL"])
 export const quizzesTable = pgTable("quizzes", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  chapterId: integer("chapter_id").notNull().references(() => chaptersTable.id),
+  chapterId: integer("chapter_id").references(() => chaptersTable.id),
   type: quizTypeEnum("type").notNull().default("CHAPTER"),
   startTime: timestamp("start_time", { withTimezone: true }),
   endTime: timestamp("end_time", { withTimezone: true }),
