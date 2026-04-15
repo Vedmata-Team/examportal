@@ -36,7 +36,6 @@ class Content(models.Model):
     html_content = models.TextField()
     min_read_time = models.IntegerField(default=60)
     order_index = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = "content"

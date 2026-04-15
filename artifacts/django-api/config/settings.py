@@ -46,6 +46,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -86,6 +87,10 @@ if DATABASE_URL:
                 "PASSWORD": password,
                 "HOST": host,
                 "PORT": port or "5432",
+                "CONN_MAX_AGE": 600,
+                "OPTIONS": {
+                    "connect_timeout": 10,
+                },
             }
         }
     else:
@@ -97,6 +102,7 @@ if DATABASE_URL:
                 "PASSWORD": "",
                 "HOST": "localhost",
                 "PORT": "5432",
+                "CONN_MAX_AGE": 600,
             }
         }
 else:
@@ -108,6 +114,10 @@ else:
             "PASSWORD": os.environ.get("PGPASSWORD", ""),
             "HOST": os.environ.get("PGHOST", "localhost"),
             "PORT": os.environ.get("PGPORT", "5432"),
+            "CONN_MAX_AGE": 600,
+            "OPTIONS": {
+                "connect_timeout": 10,
+            },
         }
     }
 
@@ -123,6 +133,8 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
+    "DEFAULT_PAGINATION_CLASS": "config.pagination.StandardPagination",
+    "PAGE_SIZE": 50,
 }
 
 SIMPLE_JWT = {
@@ -145,3 +157,23 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 LOGIN_URL = "/admin/login/"
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "WARNING",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+}

@@ -1,5 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.db.models import Count, Avg, Q
 from apps.users.models import User
 from apps.geo.models import State, District, Institution
 from apps.academics.models import Class, Chapter
@@ -22,31 +23,33 @@ def admin_dashboard(request):
     user = request.user
     role = user.role
 
-    total_users = User.objects.count()
-    total_students = User.objects.filter(role="STUDENT").count()
-    total_quizzes = Quiz.objects.count()
-    total_attempts = ExamAttempt.objects.count()
-
+    user_filter = Q()
     if role == "STATE" and user.state_id:
-        total_users = User.objects.filter(state_id=user.state_id).count()
-        total_students = User.objects.filter(role="STUDENT", state_id=user.state_id).count()
+        user_filter = Q(state_id=user.state_id)
     elif role == "DISTRICT" and user.district_id:
-        total_users = User.objects.filter(district_id=user.district_id).count()
-        total_students = User.objects.filter(role="STUDENT", district_id=user.district_id).count()
+        user_filter = Q(district_id=user.district_id)
     elif role == "INSTITUTION" and user.institution_id:
-        total_users = User.objects.filter(institution_id=user.institution_id).count()
-        total_students = User.objects.filter(role="STUDENT", institution_id=user.institution_id).count()
+        user_filter = Q(institution_id=user.institution_id)
 
-    return Response({
-        "totalUsers": total_users,
-        "totalStudents": total_students,
-        "totalQuizzes": total_quizzes,
-        "totalAttempts": total_attempts,
+    user_stats = User.objects.filter(user_filter).aggregate(
+        total_users=Count("id"),
+        total_students=Count("id", filter=Q(role="STUDENT")),
+    )
+
+    global_counts = {
         "totalStates": State.objects.count(),
         "totalDistricts": District.objects.count(),
         "totalInstitutions": Institution.objects.count(),
         "totalClasses": Class.objects.count(),
         "totalChapters": Chapter.objects.count(),
+        "totalQuizzes": Quiz.objects.count(),
+        "totalAttempts": ExamAttempt.objects.count(),
+    }
+
+    return Response({
+        "totalUsers": user_stats["total_users"] or 0,
+        "totalStudents": user_stats["total_students"] or 0,
+        **global_counts,
     })
 
 
@@ -57,26 +60,26 @@ def student_dashboard(request):
         return err
 
     user = request.user
-    attempts = ExamAttempt.objects.filter(user_id=user.id)
-    total_attempts = attempts.count()
-    submitted = attempts.filter(status="SUBMITTED")
-    avg_score = 0
-    if submitted.exists():
-        scores = [a.score for a in submitted if a.score is not None]
-        if scores:
-            avg_score = round(sum(scores) / len(scores))
 
-    recent_attempts = list(
-        attempts.order_by("-started_at")[:5].values(
-            "id", "quiz_id", "status", "score", "started_at", "submitted_at"
-        )
+    attempt_stats = ExamAttempt.objects.filter(user_id=user.id).aggregate(
+        total_attempts=Count("id"),
+        avg_score=Avg("score", filter=Q(status="SUBMITTED")),
     )
 
+    recent_attempts = list(
+        ExamAttempt.objects.filter(user_id=user.id)
+        .only("id", "quiz_id", "status", "score", "started_at", "submitted_at")
+        .order_by("-started_at")[:10]
+        .values("id", "quiz_id", "status", "score", "started_at", "submitted_at")
+    )
+
+    available_quizzes = Quiz.objects.count()
+
     return Response({
-        "totalAttempts": total_attempts,
-        "averageScore": avg_score,
+        "totalAttempts": attempt_stats["total_attempts"] or 0,
+        "averageScore": round(attempt_stats["avg_score"] or 0, 1),
         "recentAttempts": recent_attempts,
-        "availableQuizzes": Quiz.objects.count(),
+        "availableQuizzes": available_quizzes,
     })
 
 
@@ -88,36 +91,49 @@ def recent_activity(request):
 
     user = request.user
     role = user.role
+    limit = min(int(request.query_params.get("limit", 20)), 100)
 
     if role in ["CENTRAL", "STATE", "DISTRICT", "INSTITUTION"]:
-        attempts = ExamAttempt.objects.order_by("-started_at")[:10]
+        attempts_qs = (
+            ExamAttempt.objects
+            .only("id", "user_id", "quiz_id", "status", "score", "started_at")
+            .order_by("-started_at")[:limit]
+        )
     else:
-        attempts = ExamAttempt.objects.filter(user_id=user.id).order_by("-started_at")[:10]
+        attempts_qs = (
+            ExamAttempt.objects
+            .filter(user_id=user.id)
+            .only("id", "user_id", "quiz_id", "status", "score", "started_at")
+            .order_by("-started_at")[:limit]
+        )
 
-    activity = []
-    for attempt in attempts:
-        try:
-            u = User.objects.get(id=attempt.user_id)
-            user_name = u.name
-        except User.DoesNotExist:
-            user_name = "Unknown"
+    attempt_list = list(attempts_qs)
 
-        try:
-            quiz = Quiz.objects.get(id=attempt.quiz_id)
-            quiz_title = quiz.title
-        except Quiz.DoesNotExist:
-            quiz_title = "Unknown Quiz"
+    user_ids = list({a.user_id for a in attempt_list})
+    quiz_ids = list({a.quiz_id for a in attempt_list})
 
-        activity.append({
-            "id": attempt.id,
+    users_map = {
+        u["id"]: u["name"]
+        for u in User.objects.filter(id__in=user_ids).values("id", "name")
+    }
+    quizzes_map = {
+        q["id"]: q["title"]
+        for q in Quiz.objects.filter(id__in=quiz_ids).values("id", "title")
+    }
+
+    activity = [
+        {
+            "id": a.id,
             "type": "exam_attempt",
-            "userId": attempt.user_id,
-            "userName": user_name,
-            "quizId": attempt.quiz_id,
-            "quizTitle": quiz_title,
-            "status": attempt.status,
-            "score": attempt.score,
-            "timestamp": attempt.started_at.isoformat() if attempt.started_at else None,
-        })
+            "userId": a.user_id,
+            "userName": users_map.get(a.user_id, "Unknown"),
+            "quizId": a.quiz_id,
+            "quizTitle": quizzes_map.get(a.quiz_id, "Unknown Quiz"),
+            "status": a.status,
+            "score": a.score,
+            "timestamp": a.started_at.isoformat() if a.started_at else None,
+        }
+        for a in attempt_list
+    ]
 
     return Response(activity)

@@ -15,11 +15,10 @@ class ContentSerializer(serializers.ModelSerializer):
     htmlContent = serializers.CharField(source="html_content")
     minReadTime = serializers.IntegerField(source="min_read_time")
     orderIndex = serializers.IntegerField(source="order_index")
-    createdAt = serializers.DateTimeField(source="created_at", read_only=True)
 
     class Meta:
         model = Content
-        fields = ["id", "chapterId", "htmlContent", "minReadTime", "orderIndex", "createdAt"]
+        fields = ["id", "chapterId", "htmlContent", "minReadTime", "orderIndex"]
 
 
 class ChapterSerializer(serializers.ModelSerializer):

@@ -5,6 +5,7 @@ from .serializers import (
     QuizSerializer, QuizWithDetailsSerializer,
     QuizSectionSerializer, QuestionSerializer
 )
+from config.pagination import StandardPagination
 
 
 def require_auth(request):
@@ -20,10 +21,24 @@ def quizzes_list(request):
         return err
 
     if request.method == "GET":
-        qs = Quiz.objects.all()
+        qs = Quiz.objects.only(
+            "id", "title", "chapter_id", "type", "start_time", "end_time", "created_at"
+        )
         chapter_id = request.query_params.get("chapterId")
+        quiz_type = request.query_params.get("type")
+        search = request.query_params.get("search", "").strip()
         if chapter_id:
             qs = qs.filter(chapter_id=chapter_id)
+        if quiz_type:
+            qs = qs.filter(type=quiz_type)
+        if search:
+            qs = qs.filter(title__icontains=search)
+        qs = qs.order_by("-created_at")
+
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(qs, request)
+        if page is not None:
+            return paginator.get_paginated_response(QuizSerializer(page, many=True).data)
         return Response(QuizSerializer(qs, many=True).data)
 
     data = request.data
@@ -44,7 +59,14 @@ def quiz_detail(request, pk):
         return err
 
     try:
-        quiz = Quiz.objects.prefetch_related("sections__questions").get(id=pk)
+        quiz = (
+            Quiz.objects
+            .prefetch_related(
+                "sections",
+                "sections__questions",
+            )
+            .get(id=pk)
+        )
     except Quiz.DoesNotExist:
         return Response({"error": "Not found"}, status=404)
 
@@ -74,6 +96,21 @@ def questions_create(request):
         return err
 
     data = request.data
+
+    if isinstance(data, list):
+        questions = [
+            Question(
+                section_id=q["sectionId"],
+                question=q["question"],
+                options=q["options"],
+                correct_answer=q["correctAnswer"],
+                order_index=q.get("orderIndex", i),
+            )
+            for i, q in enumerate(data)
+        ]
+        Question.objects.bulk_create(questions)
+        return Response(QuestionSerializer(questions, many=True).data, status=201)
+
     question = Question.objects.create(
         section_id=data["sectionId"],
         question=data["question"],

@@ -29,9 +29,8 @@ class ChapterAdmin(admin.ModelAdmin):
 
 @admin.register(Content)
 class ContentAdmin(admin.ModelAdmin):
-    list_display = ["id", "chapter", "min_read_time", "order_index", "created_at"]
+    list_display = ["id", "chapter", "min_read_time", "order_index"]
     list_filter = ["chapter__class_ref"]
     search_fields = ["chapter__title"]
     ordering = ["chapter", "order_index"]
-    readonly_fields = ["created_at"]
     raw_id_fields = ["chapter"]
