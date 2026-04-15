@@ -1,13 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-const DJANGO_BASE = process.env.DJANGO_API_URL || "http://localhost:8000";
+const API_BASE = process.env.API_BASE_URL || "http://localhost:8080";
 
 async function handler(req: NextRequest, { params }: { params: Promise<{ proxy: string[] }> }) {
   const { proxy } = await params;
   const path = "/api/" + proxy.join("/");
 
   const url = new URL(req.url);
-  const target = `${DJANGO_BASE}${path}${url.search}`;
+  const target = `${API_BASE}${path}${url.search}`;
 
   const headers = new Headers();
   const contentType = req.headers.get("content-type");
@@ -28,7 +28,7 @@ async function handler(req: NextRequest, { params }: { params: Promise<{ proxy: 
     });
   } catch {
     return NextResponse.json(
-      { error: "Django API server unreachable. Make sure it is running on port 8000." },
+      { error: "API server unreachable. Make sure the Express backend is running on port 8080." },
       { status: 503 }
     );
   }

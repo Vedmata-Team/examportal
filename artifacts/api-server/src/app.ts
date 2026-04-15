@@ -8,6 +8,9 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+// Security: trust proxy for rate limiting behind reverse proxy
+app.set("trust proxy", 1);
+
 app.use(
   pinoHttp({
     logger,
@@ -30,7 +33,9 @@ app.use(
 
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
-app.use(cors({ credentials: true, origin: true }));
+// Security: restrict CORS to frontend origin only
+const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:3000";
+app.use(cors({ credentials: true, origin: allowedOrigin }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
