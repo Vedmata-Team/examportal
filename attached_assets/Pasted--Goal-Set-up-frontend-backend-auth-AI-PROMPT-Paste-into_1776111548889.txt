@@ -1,0 +1,315 @@
+🎯 Goal:
+
+Set up frontend + backend + auth
+
+🧠 AI PROMPT (Paste into AI Builder)
+Create a full-stack web application using:
+
+Frontend:
+- React (Vite)
+- Tailwind CSS
+- Responsive design (mobile-first)
+
+Backend:
+- Supabase (Auth + Database + RLS)
+
+Requirements:
+- Setup authentication (email + password)
+- Create two user types:
+  1. Admin
+  2. Student
+
+- Create protected routes:
+  - /admin/dashboard
+  - /student/dashboard
+
+- Store user profile in database with:
+  - id
+  - name
+  - role (ADMIN / STUDENT)
+
+- After login:
+  - Redirect admin → admin dashboard
+  - Redirect student → student dashboard
+
+- UI Theme:
+  - Orange (#FF6B00)
+  - Light orange (#FFE0B2)
+  - White background
+  - Black text (light mode)
+  - Clean professional UI
+
+Make sure:
+- JWT auth handled securely
+- No access to dashboard without login
+🏗️ PHASE 1: HIERARCHY SYSTEM (ADMIN CORE)
+🎯 Goal:
+
+Central → State → District → Institution
+
+🧠 AI PROMPT
+Extend the existing project.
+
+Create hierarchical admin system:
+
+Roles:
+- CENTRAL
+- STATE
+- DISTRICT
+- INSTITUTION
+
+Database tables:
+- states
+- districts (stateId)
+- institutions (districtId)
+
+Users table:
+- role
+- stateId
+- districtId
+- institutionId
+
+Features:
+- CENTRAL can:
+  - Create STATE users
+  - Create DISTRICT users
+  - Create INSTITUTIONS
+
+- STATE can:
+  - View/manage districts (based on permission)
+
+- DISTRICT can:
+  - Create institutions
+
+- INSTITUTION:
+  - Manage students
+
+UI:
+- Admin dashboard with sidebar:
+  - Manage States
+  - Manage Districts
+  - Manage Institutions
+  - Manage Users
+
+Security:
+- Enforce role-based access
+- Restrict data visibility based on hierarchy
+🎓 PHASE 2: STUDENT MANAGEMENT SYSTEM
+🎯 Goal:
+
+Institution adds students
+
+🧠 AI PROMPT
+Add student management system.
+
+Create table:
+- students:
+  - id
+  - name
+  - class
+  - institutionId
+
+Features:
+- Institution admin can:
+  - Add students
+  - Assign class
+
+- Students can:
+  - Login
+  - View their dashboard
+
+Student Dashboard:
+- Show:
+  - Class
+  - Available chapters
+  - Available tests
+
+Security:
+- Student sees only their institution + class data
+📚 PHASE 3: CHAPTER + CONTENT SYSTEM
+🎯 Goal:
+
+Timed reading system
+
+🧠 AI PROMPT
+Add chapter and content system.
+
+Tables:
+- classes
+- chapters (classId)
+- content:
+  - chapterId
+  - htmlContent
+  - minReadTime
+
+Admin Features:
+- Create chapters
+- Add content using CKEditor
+- Set minimum reading time (seconds)
+
+Student Features:
+- View content
+- Start reading timer
+- Disable "Next" button until timer completes
+
+Security:
+- Backend validates reading time before allowing next
+🧪 PHASE 4: QUIZ SYSTEM (SECTION-WISE)
+🎯 Goal:
+
+Structured quiz engine
+
+🧠 AI PROMPT
+Add quiz system.
+
+Tables:
+- quizzes (chapterId)
+- quiz_sections (quizId, timeLimit)
+- questions (sectionId, question, options, correctAnswer)
+
+Admin Features:
+- Create quiz
+- Add sections
+- Add questions
+
+Student Features:
+- Attempt quiz:
+  - Section-wise navigation
+  - Timer per section
+  - Auto submit on timeout
+  - Cannot go back to previous section
+
+Security:
+- Timer validated on backend
+- Answers stored securely
+🧠 PHASE 5: MOCK TEST SYSTEM
+🎯 Goal:
+
+Practice tests
+
+🧠 AI PROMPT
+Add mock test system.
+
+Tables:
+- mock_tests
+- mock_test_questions
+
+Features:
+- Combine multiple chapters
+- Flexible timing
+
+Student:
+- Attempt mock test
+- View score after submission
+🇮🇳 PHASE 6: NATIONAL TEST SYSTEM
+🎯 Goal:
+
+High-security exam
+
+🧠 AI PROMPT
+Add national test system.
+
+Tables:
+- tests:
+  - type (NATIONAL)
+  - startTime
+  - endTime
+
+Rules:
+- Students can attempt only within time window
+- Once started:
+  - Cannot pause
+  - Auto submit on timeout
+
+Optional features:
+- Tab switch detection
+- Fullscreen enforcement
+
+Backend:
+- Enforce strict timing validation
+🛡️ PHASE 7: SECURITY HARDENING
+🎯 Goal:
+
+No loopholes
+
+🧠 AI PROMPT
+Improve security of entire system.
+
+Implement:
+
+- Supabase Row Level Security (RLS)
+- Role + permission checks on all APIs
+- Backend validation for:
+  - timers
+  - submissions
+  - access control
+
+Anti-cheat:
+- Detect tab switching
+- Disable copy/paste
+- Prevent multiple submissions
+
+Ensure:
+- No direct database access from frontend
+- All sensitive logic handled on backend
+🌍 PHASE 8: SEO + PUBLIC PAGES
+🎯 Goal:
+
+Traffic + ranking
+
+🧠 AI PROMPT
+Add public SEO pages:
+
+Pages:
+- Home
+- About
+- Classes
+- Demo Content
+
+SEO:
+- Meta tags
+- Fast loading
+- Clean URLs
+
+Content:
+- "Free mock test India"
+- "Class-wise quiz platform"
+- "Online exam system"
+
+Ensure:
+- Lighthouse score high
+- Mobile optimized
+🎨 PHASE 9: UI POLISH (FINAL)
+🎯 Goal:
+
+Professional look
+
+🧠 AI PROMPT
+Improve UI/UX of entire application.
+
+Design system:
+- Orange primary (#FF6B00)
+- Light orange (#FFE0B2)
+- Clean white background
+- Black text (light mode)
+- White text (dark mode)
+
+Enhancements:
+- Smooth animations
+- Card layout
+- Sidebar navigation
+- Responsive design for all devices
+
+Ensure:
+- Not cluttered
+- Focus on content readability
+🚀 FINAL RESULT
+
+After completing all phases, you will have:
+
+✅ Admin hierarchy system
+✅ Student learning platform
+✅ Timed reading engine
+✅ Quiz + Mock + National test system
+✅ Secure backend
+✅ SEO-ready frontend

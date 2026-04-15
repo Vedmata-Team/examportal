@@ -1,0 +1,1242 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Exam Platform API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: users
+    description: User management
+  - name: states
+    description: State management
+  - name: districts
+    description: District management
+  - name: institutions
+    description: Institution management
+  - name: classes
+    description: Class management
+  - name: chapters
+    description: Chapter management
+  - name: content
+    description: Content management
+  - name: quizzes
+    description: Quiz management
+  - name: exams
+    description: Exam attempts
+  - name: dashboard
+    description: Dashboard analytics
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List users
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: institutionId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserBody"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /states:
+    get:
+      operationId: listStates
+      tags: [states]
+      summary: List all states
+      responses:
+        "200":
+          description: List of states
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/State"
+    post:
+      operationId: createState
+      tags: [states]
+      summary: Create a state
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStateBody"
+      responses:
+        "201":
+          description: Created state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/State"
+
+  /districts:
+    get:
+      operationId: listDistricts
+      tags: [districts]
+      summary: List districts
+      parameters:
+        - name: stateId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of districts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/District"
+    post:
+      operationId: createDistrict
+      tags: [districts]
+      summary: Create a district
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDistrictBody"
+      responses:
+        "201":
+          description: Created district
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/District"
+
+  /institutions:
+    get:
+      operationId: listInstitutions
+      tags: [institutions]
+      summary: List institutions
+      parameters:
+        - name: districtId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of institutions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Institution"
+    post:
+      operationId: createInstitution
+      tags: [institutions]
+      summary: Create an institution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInstitutionBody"
+      responses:
+        "201":
+          description: Created institution
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Institution"
+
+  /classes:
+    get:
+      operationId: listClasses
+      tags: [classes]
+      summary: List classes
+      responses:
+        "200":
+          description: List of classes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Class"
+    post:
+      operationId: createClass
+      tags: [classes]
+      summary: Create a class
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClassBody"
+      responses:
+        "201":
+          description: Created class
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Class"
+
+  /chapters:
+    get:
+      operationId: listChapters
+      tags: [chapters]
+      summary: List chapters
+      parameters:
+        - name: classId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of chapters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Chapter"
+    post:
+      operationId: createChapter
+      tags: [chapters]
+      summary: Create a chapter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChapterBody"
+      responses:
+        "201":
+          description: Created chapter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Chapter"
+
+  /chapters/{id}:
+    get:
+      operationId: getChapter
+      tags: [chapters]
+      summary: Get chapter with content
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Chapter with content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChapterWithContent"
+
+  /content:
+    post:
+      operationId: createContent
+      tags: [content]
+      summary: Create content for a chapter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContentBody"
+      responses:
+        "201":
+          description: Created content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Content"
+
+  /content/{id}:
+    patch:
+      operationId: updateContent
+      tags: [content]
+      summary: Update content
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateContentBody"
+      responses:
+        "200":
+          description: Updated content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Content"
+
+  /quizzes:
+    get:
+      operationId: listQuizzes
+      tags: [quizzes]
+      summary: List quizzes
+      parameters:
+        - name: chapterId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of quizzes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Quiz"
+    post:
+      operationId: createQuiz
+      tags: [quizzes]
+      summary: Create a quiz
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateQuizBody"
+      responses:
+        "201":
+          description: Created quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+
+  /quizzes/{id}:
+    get:
+      operationId: getQuiz
+      tags: [quizzes]
+      summary: Get quiz with sections and questions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Quiz with full details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizWithDetails"
+
+  /quiz-sections:
+    post:
+      operationId: createQuizSection
+      tags: [quizzes]
+      summary: Create a quiz section
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateQuizSectionBody"
+      responses:
+        "201":
+          description: Created section
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizSection"
+
+  /questions:
+    post:
+      operationId: createQuestion
+      tags: [quizzes]
+      summary: Create a question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateQuestionBody"
+      responses:
+        "201":
+          description: Created question
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+
+  /exams/start:
+    post:
+      operationId: startExam
+      tags: [exams]
+      summary: Start an exam attempt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartExamBody"
+      responses:
+        "201":
+          description: Exam attempt started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamAttempt"
+
+  /exams/submit:
+    post:
+      operationId: submitExam
+      tags: [exams]
+      summary: Submit exam answers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitExamBody"
+      responses:
+        "200":
+          description: Exam result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamResult"
+
+  /exams/attempts:
+    get:
+      operationId: listExamAttempts
+      tags: [exams]
+      summary: List exam attempts for current user
+      parameters:
+        - name: quizId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of attempts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExamAttempt"
+
+  /dashboard/admin:
+    get:
+      operationId: getAdminDashboard
+      tags: [dashboard]
+      summary: Admin dashboard summary
+      responses:
+        "200":
+          description: Admin dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+
+  /dashboard/student:
+    get:
+      operationId: getStudentDashboard
+      tags: [dashboard]
+      summary: Student dashboard summary
+      responses:
+        "200":
+          description: Student dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentDashboard"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Recent activity feed
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [CENTRAL, STATE, DISTRICT, INSTITUTION, STUDENT]
+        stateId:
+          type: ["integer", "null"]
+        districtId:
+          type: ["integer", "null"]
+        institutionId:
+          type: ["integer", "null"]
+        classId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - clerkId
+        - name
+        - email
+        - role
+        - createdAt
+
+    CreateUserBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [CENTRAL, STATE, DISTRICT, INSTITUTION, STUDENT]
+        stateId:
+          type: ["integer", "null"]
+        districtId:
+          type: ["integer", "null"]
+        institutionId:
+          type: ["integer", "null"]
+        classId:
+          type: ["integer", "null"]
+      required:
+        - name
+        - email
+        - role
+
+    UpdateUserBody:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+          enum: [CENTRAL, STATE, DISTRICT, INSTITUTION, STUDENT]
+        stateId:
+          type: ["integer", "null"]
+        districtId:
+          type: ["integer", "null"]
+        institutionId:
+          type: ["integer", "null"]
+        classId:
+          type: ["integer", "null"]
+
+    State:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - code
+        - createdAt
+
+    CreateStateBody:
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+      required:
+        - name
+        - code
+
+    District:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        stateId:
+          type: integer
+        stateName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - stateId
+        - createdAt
+
+    CreateDistrictBody:
+      type: object
+      properties:
+        name:
+          type: string
+        stateId:
+          type: integer
+      required:
+        - name
+        - stateId
+
+    Institution:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        districtId:
+          type: integer
+        districtName:
+          type: string
+        stateName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - districtId
+        - createdAt
+
+    CreateInstitutionBody:
+      type: object
+      properties:
+        name:
+          type: string
+        districtId:
+          type: integer
+      required:
+        - name
+        - districtId
+
+    Class:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - createdAt
+
+    CreateClassBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+      required:
+        - name
+
+    Chapter:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        classId:
+          type: integer
+        className:
+          type: string
+        orderIndex:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - classId
+        - orderIndex
+        - createdAt
+
+    CreateChapterBody:
+      type: object
+      properties:
+        title:
+          type: string
+        classId:
+          type: integer
+        orderIndex:
+          type: integer
+      required:
+        - title
+        - classId
+        - orderIndex
+
+    ChapterWithContent:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        classId:
+          type: integer
+        className:
+          type: string
+        orderIndex:
+          type: integer
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/Content"
+      required:
+        - id
+        - title
+        - classId
+        - orderIndex
+        - content
+
+    Content:
+      type: object
+      properties:
+        id:
+          type: integer
+        chapterId:
+          type: integer
+        htmlContent:
+          type: string
+        minReadTime:
+          type: integer
+        orderIndex:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - chapterId
+        - htmlContent
+        - minReadTime
+        - orderIndex
+        - createdAt
+
+    CreateContentBody:
+      type: object
+      properties:
+        chapterId:
+          type: integer
+        htmlContent:
+          type: string
+        minReadTime:
+          type: integer
+        orderIndex:
+          type: integer
+      required:
+        - chapterId
+        - htmlContent
+        - minReadTime
+        - orderIndex
+
+    UpdateContentBody:
+      type: object
+      properties:
+        htmlContent:
+          type: string
+        minReadTime:
+          type: integer
+        orderIndex:
+          type: integer
+
+    Quiz:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        chapterId:
+          type: integer
+        chapterTitle:
+          type: string
+        type:
+          type: string
+          enum: [CHAPTER, MOCK, NATIONAL]
+        startTime:
+          type: ["string", "null"]
+          format: date-time
+        endTime:
+          type: ["string", "null"]
+          format: date-time
+        totalQuestions:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - chapterId
+        - type
+        - totalQuestions
+        - createdAt
+
+    CreateQuizBody:
+      type: object
+      properties:
+        title:
+          type: string
+        chapterId:
+          type: integer
+        type:
+          type: string
+          enum: [CHAPTER, MOCK, NATIONAL]
+        startTime:
+          type: ["string", "null"]
+          format: date-time
+        endTime:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - title
+        - chapterId
+        - type
+
+    QuizWithDetails:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        chapterId:
+          type: integer
+        type:
+          type: string
+          enum: [CHAPTER, MOCK, NATIONAL]
+        startTime:
+          type: ["string", "null"]
+          format: date-time
+        endTime:
+          type: ["string", "null"]
+          format: date-time
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuizSectionWithQuestions"
+      required:
+        - id
+        - title
+        - chapterId
+        - type
+        - sections
+
+    QuizSection:
+      type: object
+      properties:
+        id:
+          type: integer
+        quizId:
+          type: integer
+        title:
+          type: string
+        timeLimit:
+          type: integer
+        orderIndex:
+          type: integer
+      required:
+        - id
+        - quizId
+        - title
+        - timeLimit
+        - orderIndex
+
+    CreateQuizSectionBody:
+      type: object
+      properties:
+        quizId:
+          type: integer
+        title:
+          type: string
+        timeLimit:
+          type: integer
+        orderIndex:
+          type: integer
+      required:
+        - quizId
+        - title
+        - timeLimit
+        - orderIndex
+
+    QuizSectionWithQuestions:
+      type: object
+      properties:
+        id:
+          type: integer
+        quizId:
+          type: integer
+        title:
+          type: string
+        timeLimit:
+          type: integer
+        orderIndex:
+          type: integer
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Question"
+      required:
+        - id
+        - quizId
+        - title
+        - timeLimit
+        - orderIndex
+        - questions
+
+    Question:
+      type: object
+      properties:
+        id:
+          type: integer
+        sectionId:
+          type: integer
+        question:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        correctAnswer:
+          type: integer
+        orderIndex:
+          type: integer
+      required:
+        - id
+        - sectionId
+        - question
+        - options
+        - correctAnswer
+        - orderIndex
+
+    CreateQuestionBody:
+      type: object
+      properties:
+        sectionId:
+          type: integer
+        question:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        correctAnswer:
+          type: integer
+        orderIndex:
+          type: integer
+      required:
+        - sectionId
+        - question
+        - options
+        - correctAnswer
+        - orderIndex
+
+    ExamAttempt:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        quizId:
+          type: integer
+        quizTitle:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        submittedAt:
+          type: ["string", "null"]
+          format: date-time
+        score:
+          type: ["integer", "null"]
+        totalQuestions:
+          type: integer
+        correctAnswers:
+          type: ["integer", "null"]
+        status:
+          type: string
+          enum: [IN_PROGRESS, SUBMITTED, TIMED_OUT]
+      required:
+        - id
+        - userId
+        - quizId
+        - startedAt
+        - totalQuestions
+        - status
+
+    StartExamBody:
+      type: object
+      properties:
+        quizId:
+          type: integer
+      required:
+        - quizId
+
+    SubmitExamBody:
+      type: object
+      properties:
+        attemptId:
+          type: integer
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnswerItem"
+      required:
+        - attemptId
+        - answers
+
+    AnswerItem:
+      type: object
+      properties:
+        questionId:
+          type: integer
+        selectedOption:
+          type: integer
+      required:
+        - questionId
+        - selectedOption
+
+    ExamResult:
+      type: object
+      properties:
+        attemptId:
+          type: integer
+        score:
+          type: integer
+        totalQuestions:
+          type: integer
+        correctAnswers:
+          type: integer
+        percentage:
+          type: number
+      required:
+        - attemptId
+        - score
+        - totalQuestions
+        - correctAnswers
+        - percentage
+
+    AdminDashboard:
+      type: object
+      properties:
+        totalStudents:
+          type: integer
+        totalInstitutions:
+          type: integer
+        totalQuizzes:
+          type: integer
+        totalStates:
+          type: integer
+        totalDistricts:
+          type: integer
+        totalChapters:
+          type: integer
+        recentAttempts:
+          type: integer
+        averageScore:
+          type: number
+      required:
+        - totalStudents
+        - totalInstitutions
+        - totalQuizzes
+        - totalStates
+        - totalDistricts
+        - totalChapters
+        - recentAttempts
+        - averageScore
+
+    StudentDashboard:
+      type: object
+      properties:
+        totalAttempts:
+          type: integer
+        averageScore:
+          type: number
+        completedQuizzes:
+          type: integer
+        availableQuizzes:
+          type: integer
+        recentScores:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecentScore"
+      required:
+        - totalAttempts
+        - averageScore
+        - completedQuizzes
+        - availableQuizzes
+        - recentScores
+
+    RecentScore:
+      type: object
+      properties:
+        quizTitle:
+          type: string
+        score:
+          type: integer
+        totalQuestions:
+          type: integer
+        percentage:
+          type: number
+        submittedAt:
+          type: string
+          format: date-time
+      required:
+        - quizTitle
+        - score
+        - totalQuestions
+        - percentage
+        - submittedAt
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        description:
+          type: string
+        userName:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - id
+        - type
+        - description
+        - timestamp
