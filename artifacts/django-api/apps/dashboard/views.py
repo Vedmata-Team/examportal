@@ -68,9 +68,9 @@ def student_dashboard(request):
 
     recent_attempts = list(
         ExamAttempt.objects.filter(user_id=user.id)
-        .only("id", "quiz_id", "status", "score", "started_at", "submitted_at")
+        .only("id", "quiz_id", "status", "score", "started_at", "completed_at")
         .order_by("-started_at")[:10]
-        .values("id", "quiz_id", "status", "score", "started_at", "submitted_at")
+        .values("id", "quiz_id", "status", "score", "started_at", "completed_at")
     )
 
     available_quizzes = Quiz.objects.count()

@@ -1,3 +1,4 @@
+import os
 from django.db import models
 
 
@@ -9,28 +10,27 @@ class ExamAttempt(models.Model):
     ]
 
     id = models.AutoField(primary_key=True)
-    user_id = models.IntegerField()
-    quiz_id = models.IntegerField()
+    user = models.ForeignKey("exam_users.User", on_delete=models.CASCADE, db_column="user_id")
+    quiz = models.ForeignKey("exam_quizzes.Quiz", on_delete=models.CASCADE, db_column="quiz_id")
+    score = models.FloatField(null=True, blank=True)
     started_at = models.DateTimeField(auto_now_add=True)
-    submitted_at = models.DateTimeField(null=True, blank=True)
-    score = models.IntegerField(null=True, blank=True)
-    total_questions = models.IntegerField(default=0)
-    correct_answers = models.IntegerField(null=True, blank=True)
-    tab_switches = models.IntegerField(default=0)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    metadata = models.JSONField(null=True, blank=True)
     status = models.TextField(choices=STATUS_CHOICES, default="IN_PROGRESS")
 
     class Meta:
         db_table = "exam_attempts"
-        managed = False
+        managed = os.environ.get("USE_SQLITE", "false").lower() == "true" or not os.environ.get("DATABASE_URL")
 
 
 class ExamAnswer(models.Model):
     id = models.AutoField(primary_key=True)
-    attempt = models.ForeignKey(ExamAttempt, on_delete=models.CASCADE, db_column="attempt_id", related_name="answers")
-    question_id = models.IntegerField()
+    attempt = models.ForeignKey(ExamAttempt, on_delete=models.CASCADE, db_column="attempt_id")
+    question = models.ForeignKey("exam_quizzes.Question", on_delete=models.CASCADE, db_column="question_id")
     selected_option = models.IntegerField()
-    is_correct = models.BooleanField(default=False)
+    is_correct = models.BooleanField()
+    answered_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = "exam_answers"
-        managed = False
+        managed = os.environ.get("USE_SQLITE", "false").lower() == "true" or not os.environ.get("DATABASE_URL")

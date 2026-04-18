@@ -1,6 +1,4 @@
 import { cookies } from "next/headers";
-import { eq } from "drizzle-orm";
-import { db, usersTable } from "@/lib/db";
 import { verifySessionToken } from "@/lib/auth";
 import type { User } from "@workspace/db/schema";
 
@@ -31,8 +29,21 @@ export async function getSessionUser(): Promise<User | null> {
     };
   }
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
-  return user ?? null;
+  const API_BASE = process.env.API_BASE_URL || "http://localhost:8000";
+  try {
+    const res = await fetch(`${API_BASE}/api/users/me/`, {
+      headers: {
+        Cookie: `exam_session=${token}`,
+      },
+      next: { revalidate: 60 }, // Cache for 1 minute
+    });
+
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to fetch session user from Django API:", err);
+    return null;
+  }
 }
 
 export function unauthorized() {

@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 
 const COOKIE_NAME = "exam_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
-const secret = process.env.SESSION_SECRET || process.env.DATABASE_URL || "dev-session-secret";
+const secret = process.env.SESSION_SECRET || process.env.DJANGO_SECRET_KEY || process.env.DATABASE_URL || "dev-session-secret";
 
 function sign(value: string): string {
   return crypto.createHmac("sha256", secret).update(value).digest("base64url");

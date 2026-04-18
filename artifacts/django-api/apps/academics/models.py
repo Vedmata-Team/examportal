@@ -1,3 +1,4 @@
+import os
 from django.db import models
 
 
@@ -9,7 +10,7 @@ class Class(models.Model):
 
     class Meta:
         db_table = "classes"
-        managed = False
+        managed = os.environ.get("USE_SQLITE", "false").lower() == "true" or not os.environ.get("DATABASE_URL")
 
     def __str__(self):
         return self.name
@@ -24,7 +25,7 @@ class Chapter(models.Model):
 
     class Meta:
         db_table = "chapters"
-        managed = False
+        managed = os.environ.get("USE_SQLITE", "false").lower() == "true" or not os.environ.get("DATABASE_URL")
 
     def __str__(self):
         return self.title
@@ -39,4 +40,4 @@ class Content(models.Model):
 
     class Meta:
         db_table = "content"
-        managed = False
+        managed = os.environ.get("USE_SQLITE", "false").lower() == "true" or not os.environ.get("DATABASE_URL")

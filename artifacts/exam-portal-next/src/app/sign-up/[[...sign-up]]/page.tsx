@@ -1,6 +1,5 @@
 "use client";
 
-import { SignUp } from "@clerk/nextjs";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -131,17 +130,9 @@ function LocalAuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
 }
 
 export default function SignUpPage() {
-  if (!hasClerk) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <LocalAuthForm mode="sign-up" />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4">
-      <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" />
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <LocalAuthForm mode="sign-up" />
     </div>
   );
 }

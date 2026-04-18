@@ -29,9 +29,18 @@ DROP INDEX IF EXISTS idx_exam_answers_question_id;
 """
 
 
+def apply_indexes(apps, schema_editor):
+    if schema_editor.connection.vendor == 'postgresql':
+        schema_editor.execute(FORWARD_SQL)
+
+def remove_indexes(apps, schema_editor):
+    if schema_editor.connection.vendor == 'postgresql':
+        schema_editor.execute(REVERSE_SQL)
+
+
 class Migration(migrations.Migration):
     dependencies = []
 
     operations = [
-        migrations.RunSQL(sql=FORWARD_SQL, reverse_sql=REVERSE_SQL),
+        migrations.RunPython(apply_indexes, remove_indexes),
     ]

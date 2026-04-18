@@ -14,18 +14,17 @@ class ExamAnswerInline(admin.TabularInline):
 
 @admin.register(ExamAttempt)
 class ExamAttemptAdmin(admin.ModelAdmin):
-    list_display = ["id", "user_id", "quiz_id", "status", "score", "correct_answers", "total_questions", "started_at", "submitted_at"]
-    list_filter = ["status"]
-    search_fields = ["user_id", "quiz_id"]
+    list_display = ["id", "user", "quiz", "score", "started_at", "completed_at"]
+    search_fields = ["user__email", "quiz__title"]
     ordering = ["-started_at"]
-    readonly_fields = ["started_at", "submitted_at", "score", "correct_answers", "total_questions", "tab_switches"]
+    readonly_fields = ["started_at", "completed_at", "score", "metadata"]
     inlines = [ExamAnswerInline]
 
 
 @admin.register(ExamAnswer)
 class ExamAnswerAdmin(admin.ModelAdmin):
-    list_display = ["id", "attempt", "question_id", "selected_option", "is_correct"]
+    list_display = ["id", "attempt", "question", "selected_option", "is_correct"]
     list_filter = ["is_correct"]
     search_fields = ["attempt__id"]
-    ordering = ["attempt", "question_id"]
-    readonly_fields = ["attempt", "question_id", "selected_option", "is_correct"]
+    ordering = ["attempt", "question"]
+    readonly_fields = ["attempt", "question", "selected_option", "is_correct"]

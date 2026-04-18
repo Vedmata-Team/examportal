@@ -1,6 +1,6 @@
 "use client";
 
-import AdminContent from "@/pages/admin/content";
+import AdminContent from "@/legacy-pages/admin/content";
 import { use } from "react";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {

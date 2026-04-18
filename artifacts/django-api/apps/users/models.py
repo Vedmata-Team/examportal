@@ -1,3 +1,4 @@
+import os
 from django.db import models
 
 
@@ -24,7 +25,7 @@ class User(models.Model):
 
     class Meta:
         db_table = "users"
-        managed = False
+        managed = os.environ.get("USE_SQLITE", "false").lower() == "true" or not os.environ.get("DATABASE_URL")
 
     def __str__(self):
         return f"{self.name} ({self.email})"

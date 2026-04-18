@@ -1,3 +1,4 @@
+import os
 from django.db import models
 
 
@@ -9,7 +10,7 @@ class State(models.Model):
 
     class Meta:
         db_table = "states"
-        managed = False
+        managed = os.environ.get("USE_SQLITE", "false").lower() == "true" or not os.environ.get("DATABASE_URL")
 
     def __str__(self):
         return self.name
@@ -23,7 +24,7 @@ class District(models.Model):
 
     class Meta:
         db_table = "districts"
-        managed = False
+        managed = os.environ.get("USE_SQLITE", "false").lower() == "true" or not os.environ.get("DATABASE_URL")
 
     def __str__(self):
         return self.name
@@ -37,7 +38,7 @@ class Institution(models.Model):
 
     class Meta:
         db_table = "institutions"
-        managed = False
+        managed = os.environ.get("USE_SQLITE", "false").lower() == "true" or not os.environ.get("DATABASE_URL")
 
     def __str__(self):
         return self.name

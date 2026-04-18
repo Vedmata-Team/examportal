@@ -1,11 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Outfit } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
 import { Providers } from "@/components/Providers";
-import "./globals.css";
 import { ShellLayout } from "@/components/layout/ShellLayout";
-import { hasClerk } from "@/lib/constants";
 
+import "./globals.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 
 const inter = Inter({
@@ -40,12 +38,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const content = (
-    <Providers>
-      <ShellLayout>{children}</ShellLayout>
-    </Providers>
-  );
-
   return (
     <html
       lang="en"
@@ -53,11 +45,9 @@ export default function RootLayout({
       className={`${inter.variable} ${outfit.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
-        {hasClerk ? (
-          <ClerkProvider>{content}</ClerkProvider>
-        ) : (
-          content
-        )}
+        <Providers>
+          <ShellLayout>{children}</ShellLayout>
+        </Providers>
       </body>
     </html>
   );

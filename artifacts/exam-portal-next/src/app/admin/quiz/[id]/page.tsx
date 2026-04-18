@@ -1,6 +1,6 @@
 "use client";
 
-import AdminQuizDetail from "@/pages/admin/quiz-detail";
+import AdminQuizDetail from "@/legacy-pages/quiz-detail";
 import { use } from "react";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {

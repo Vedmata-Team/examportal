@@ -1,6 +1,6 @@
 "use client";
 
-import StudentQuizAttempt from "@/pages/student/quiz-attempt";
+import StudentQuizAttempt from "@/legacy-pages/student/quiz-attempt";
 import { use } from "react";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {

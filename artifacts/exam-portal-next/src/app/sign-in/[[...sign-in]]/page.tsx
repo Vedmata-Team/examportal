@@ -1,6 +1,5 @@
 "use client";
 
-import { SignIn } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -20,10 +19,11 @@ function LocalAuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
 
   const authMutation = useMutation({
     mutationFn: async (data: any) => {
-      const endpoint = mode === "sign-in" ? "/api/auth/login" : "/api/auth/register";
+      const endpoint = mode === "sign-in" ? "/api/auth/login/" : "/api/auth/register/";
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(data),
       });
       if (!res.ok) {
@@ -43,11 +43,15 @@ function LocalAuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === "sign-up" && !name) {
-      setError("Name is required");
-      return;
+    if (mode === "sign-up") {
+      if (!name) {
+        setError("Name is required");
+        return;
+      }
+      authMutation.mutate({ email, password, name });
+    } else {
+      authMutation.mutate({ email, password });
     }
-    authMutation.mutate({ email, password, name });
   };
 
   return (
@@ -131,17 +135,9 @@ function LocalAuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
 }
 
 export default function SignInPage() {
-  if (!hasClerk) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <LocalAuthForm mode="sign-in" />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4">
-      <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <LocalAuthForm mode="sign-in" />
     </div>
   );
 }

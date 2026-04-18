@@ -11,12 +11,13 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-exam-platform-
 
 DEBUG = os.environ.get("DEBUG", "true").lower() == "true"
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 
 CSRF_TRUSTED_ORIGINS = [
     "https://*.replit.dev",
     "https://*.replit.app",
     "http://localhost:8000",
+    os.environ.get("FRONTEND_URL", "http://localhost:3000"),
 ]
 
 INSTALLED_APPS = [
@@ -69,9 +70,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
+USE_SQLITE = os.environ.get("USE_SQLITE", "false").lower() == "true"
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
-if DATABASE_URL:
+if USE_SQLITE or not DATABASE_URL:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+elif DATABASE_URL:
     import re
     m = re.match(
         r"postgresql(?:\+\w+)?://([^:]+):([^@]+)@([^:/]+)(?::(\d+))?/(.+)", DATABASE_URL
@@ -144,7 +153,22 @@ SIMPLE_JWT = {
     "SIGNING_KEY": SECRET_KEY,
 }
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Security Hardening
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = "DENY"
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    os.environ.get("FRONTEND_URL", "http://localhost:3000"),
+]
 CORS_ALLOW_CREDENTIALS = True
 CORS_URLS_REGEX = r"^/api/.*$"
 

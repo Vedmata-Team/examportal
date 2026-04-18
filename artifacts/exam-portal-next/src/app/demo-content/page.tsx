@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Metadata } from "metadata";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Demo Content | ExamPlatform Preview",

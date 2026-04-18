@@ -18,6 +18,11 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const router = useRouter();
   const { data: user } = useGetMe();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isQuizRoute = pathname.startsWith("/student/quiz/");
+
+  if (isQuizRoute) {
+    return <div className="h-screen w-screen overflow-hidden bg-background">{children}</div>;
+  }
 
   async function signOut() {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => undefined);
