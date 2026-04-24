@@ -56,7 +56,11 @@ export async function DELETE(request: NextRequest, props: { params: Promise<{ pr
 async function handleProxy(request: NextRequest, proxy: string[]) {
   const path = proxy.join("/");
   const url = new URL(request.url);
-  const target = `${API_BASE}/api/${path}${url.search}`;
+  
+  // Django requires trailing slashes for its endpoints.
+  // We append it to the path if it's missing, except for files or specific non-slash routes if needed.
+  const djangoPath = path + (path.endsWith("/") ? "" : "/");
+  const target = `${API_BASE}/api/${djangoPath}${url.search}`;
 
   // ── MOCK SESSION INTERCEPTION ──
   // Use request.cookies for better reliability in proxy context
@@ -78,7 +82,17 @@ async function handleProxy(request: NextRequest, proxy: string[]) {
         });
     }
 
-    if (path === "dashboard/student") return NextResponse.json(MOCK_DASHBOARD);
+    if (path === "dashboard/student") return NextResponse.json({
+      totalAttempts: 12,
+      averageScore: 84.5,
+      completedQuizzes: 8,
+      availableQuizzes: 4,
+      recentScores: [
+        { quizTitle: "Civics: Preamble & Parts", score: 18, totalQuestions: 20, percentage: 90, submittedAt: new Date(Date.now() - 86400000 * 2).toISOString() },
+        { quizTitle: "History: 1857 Revolt", score: 15, totalQuestions: 20, percentage: 75, submittedAt: new Date(Date.now() - 86400000 * 5).toISOString() },
+        { quizTitle: "Geography: River Systems", score: 17, totalQuestions: 20, percentage: 85, submittedAt: new Date(Date.now() - 86400000 * 8).toISOString() },
+      ]
+    });
     if (path === "chapters") return NextResponse.json(MOCK_CHAPTERS);
     if (path === "quizzes") return NextResponse.json(MOCK_QUIZZES);
     
@@ -123,19 +137,23 @@ async function handleProxy(request: NextRequest, proxy: string[]) {
     }
 
     if (path === "exams/attempts") return NextResponse.json([
-      { id: 9991, quizTitle: "Fundamental Rights Practice set", score: 100, totalQuestions: 2, correctAnswers: 2, status: "SUBMITTED", submittedAt: new Date().toISOString() },
-      { id: 9992, quizTitle: "Independence Movement assessment", score: 85, totalQuestions: 20, correctAnswers: 17, status: "SUBMITTED", submittedAt: "2026-04-16T14:30:00.000Z" }
+      { id: 9991, userId: -1, quizId: 201, score: 100, totalQuestions: 2, correctAnswers: 2, tabSwitches: 0, status: "SUBMITTED", startedAt: new Date().toISOString(), submittedAt: new Date().toISOString() },
+      { id: 9992, userId: -1, quizId: 202, score: 85, totalQuestions: 20, correctAnswers: 17, tabSwitches: 0, status: "SUBMITTED", startedAt: "2026-04-16T14:30:00.000Z", submittedAt: "2026-04-16T14:30:00.000Z" }
     ]);
 
     if (path.startsWith("exams/attempts/")) {
       const attemptId = Number(path.split("/")[2]);
       return NextResponse.json({
         id: attemptId,
+        userId: -1,
+        quizId: 201,
         quizTitle: "Mock Quiz result",
         score: 100,
         totalQuestions: 2,
         correctAnswers: 2,
+        tabSwitches: 0,
         status: "SUBMITTED",
+        startedAt: new Date(Date.now() - 3600000).toISOString(),
         submittedAt: new Date().toISOString(),
         answers: [
           { 
@@ -162,7 +180,11 @@ async function handleProxy(request: NextRequest, proxy: string[]) {
       });
     }
 
-    if (path === "exams/start") return NextResponse.json({ id: 9991, status: "STARTED", startedAt: new Date().toISOString() });
+    if (path === "exams/start") return NextResponse.json({
+      id: 9991, userId: -1, quizId: 201, status: "IN_PROGRESS",
+      startedAt: new Date().toISOString(), submittedAt: null,
+      score: null, totalQuestions: 2, correctAnswers: null, tabSwitches: 0,
+    });
     if (path === "exams/submit") return NextResponse.json({ attemptId: 9991, score: 100, totalQuestions: 2, correctAnswers: 2, percentage: 100 });
   }
 
@@ -183,6 +205,17 @@ async function handleProxy(request: NextRequest, proxy: string[]) {
     const responseHeaders = new Headers(upstream.headers);
     responseHeaders.delete("content-encoding");
     responseHeaders.delete("content-length");
+
+    // If Django returned non-JSON (HTML error page), convert to a JSON error
+    const contentType = upstream.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/json")) {
+      const text = await upstream.text();
+      console.error(`[proxy] Non-JSON response from Django (${upstream.status}) for ${path}:`, text.slice(0, 300));
+      return NextResponse.json(
+        { error: `Backend error (${upstream.status})` },
+        { status: upstream.status >= 500 ? 502 : upstream.status }
+      );
+    }
 
     return new NextResponse(upstream.body, {
       status: upstream.status,

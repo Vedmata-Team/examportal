@@ -19,12 +19,6 @@ def _b64_encode(b):
     return base64.urlsafe_b64encode(b).rstrip(b"=").decode()
 
 
-def sign(payload: str, secret: str) -> str:
-    return hmac.new(
-        secret.encode(), payload.encode(), hashlib.sha256
-    ).digest()
-
-
 def create_session_token(user_id: int, secret: str) -> str:
     exp = int(time.time()) + 60 * 60 * 24 * 7
     payload_bytes = json.dumps({"userId": user_id, "exp": exp}).encode()

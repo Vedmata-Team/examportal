@@ -31,7 +31,7 @@ export default function AdminQuizzes() {
     createQuiz.mutate({
       data: {
         title,
-        chapterIds,
+        chapterId: chapterIds[0] ?? undefined,
         type: type as any,
         startTime: startTime ? new Date(startTime).toISOString() : undefined,
         endTime: endTime ? new Date(endTime).toISOString() : undefined,

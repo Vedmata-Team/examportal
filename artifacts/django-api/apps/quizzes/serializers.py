@@ -4,7 +4,8 @@ from .models import Quiz, QuizSection, Question
 
 class QuestionSerializer(serializers.ModelSerializer):
     sectionId = serializers.IntegerField(source="section_id")
-    correctAnswer = serializers.IntegerField(source="correct_answer")
+    question = serializers.CharField(source="text")
+    correctAnswer = serializers.IntegerField(source="correct_option")
     orderIndex = serializers.IntegerField(source="order_index")
 
     class Meta:
@@ -35,17 +36,18 @@ class QuizSectionWithQuestionsSerializer(serializers.ModelSerializer):
 
 class QuizSerializer(serializers.ModelSerializer):
     chapterId = serializers.IntegerField(source="chapter_id", allow_null=True)
-    chapterTitle = serializers.SerializerMethodField()
+    chapterTitle = serializers.CharField(source="chapter.title", read_only=True, allow_null=True, default=None)
     startTime = serializers.DateTimeField(source="start_time", allow_null=True)
     endTime = serializers.DateTimeField(source="end_time", allow_null=True)
     createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+    totalQuestions = serializers.SerializerMethodField()
 
     class Meta:
         model = Quiz
-        fields = ["id", "title", "chapterId", "chapterTitle", "type", "startTime", "endTime", "createdAt"]
+        fields = ["id", "title", "chapterId", "chapterTitle", "type", "startTime", "endTime", "totalQuestions", "createdAt"]
 
-    def get_chapterTitle(self, obj):
-        return None
+    def get_totalQuestions(self, obj):
+        return getattr(obj, "total_questions_count", None) or 0
 
 
 class QuizWithDetailsSerializer(serializers.ModelSerializer):

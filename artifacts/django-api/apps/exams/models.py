@@ -1,6 +1,8 @@
 import os
 from django.db import models
 
+_MANAGED = os.environ.get("USE_SQLITE", "false").lower() == "true" or not os.environ.get("DATABASE_URL")
+
 
 class ExamAttempt(models.Model):
     STATUS_CHOICES = [
@@ -13,14 +15,18 @@ class ExamAttempt(models.Model):
     user = models.ForeignKey("exam_users.User", on_delete=models.CASCADE, db_column="user_id")
     quiz = models.ForeignKey("exam_quizzes.Quiz", on_delete=models.CASCADE, db_column="quiz_id")
     score = models.FloatField(null=True, blank=True)
+    total_questions = models.IntegerField(default=0)
+    correct_answers = models.IntegerField(null=True, blank=True)
+    tab_switches = models.IntegerField(default=0)
     started_at = models.DateTimeField(auto_now_add=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     metadata = models.JSONField(null=True, blank=True)
     status = models.TextField(choices=STATUS_CHOICES, default="IN_PROGRESS")
 
     class Meta:
         db_table = "exam_attempts"
-        managed = os.environ.get("USE_SQLITE", "false").lower() == "true" or not os.environ.get("DATABASE_URL")
+        managed = _MANAGED
 
 
 class ExamAnswer(models.Model):
@@ -33,4 +39,4 @@ class ExamAnswer(models.Model):
 
     class Meta:
         db_table = "exam_answers"
-        managed = os.environ.get("USE_SQLITE", "false").lower() == "true" or not os.environ.get("DATABASE_URL")
+        managed = _MANAGED

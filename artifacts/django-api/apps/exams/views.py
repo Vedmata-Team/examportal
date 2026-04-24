@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from django.utils import timezone
 from django.db import transaction
 from .models import ExamAttempt, ExamAnswer
-from .serializers import ExamAttemptSerializer
-from apps.quizzes.models import Question
+from .serializers import ExamAttemptSerializer, ExamAttemptDetailSerializer
+from apps.quizzes.models import Question, Quiz
 from config.pagination import StandardPagination
 
 
@@ -57,8 +57,8 @@ def submit_exam(request):
 
     question_ids = [a.get("questionId") for a in answers_data if a.get("questionId")]
     questions_map = {
-        q.id: q.correct_answer
-        for q in Question.objects.filter(id__in=question_ids).only("id", "correct_answer")
+        q.id: q.correct_option
+        for q in Question.objects.filter(id__in=question_ids).only("id", "correct_option")
     }
 
     correct_count = 0
@@ -118,9 +118,20 @@ def list_attempts(request):
 
     paginator = StandardPagination()
     page = paginator.paginate_queryset(qs, request)
+    items = page if page is not None else list(qs)
+
+    quiz_ids = list({a.quiz_id for a in items})
+    quizzes_map = {
+        q["id"]: q["title"]
+        for q in Quiz.objects.filter(id__in=quiz_ids).values("id", "title")
+    }
+    for a in items:
+        a._quiz_title = quizzes_map.get(a.quiz_id)
+
+    serialized = ExamAttemptSerializer(items, many=True).data
     if page is not None:
-        return paginator.get_paginated_response(ExamAttemptSerializer(page, many=True).data)
-    return Response(ExamAttemptSerializer(qs, many=True).data)
+        return paginator.get_paginated_response(serialized)
+    return Response(serialized)
 
 
 @api_view(["GET"])
@@ -130,8 +141,15 @@ def attempt_detail(request, pk):
         return err
 
     try:
-        attempt = ExamAttempt.objects.get(id=pk, user_id=request.user.id)
+        attempt = ExamAttempt.objects.prefetch_related(
+            "examanswer_set__question"
+        ).get(id=pk, user_id=request.user.id)
     except ExamAttempt.DoesNotExist:
         return Response({"error": "Not found"}, status=404)
 
-    return Response(ExamAttemptSerializer(attempt).data)
+    try:
+        attempt._quiz_title = Quiz.objects.values_list("title", flat=True).get(id=attempt.quiz_id)
+    except Quiz.DoesNotExist:
+        attempt._quiz_title = None
+
+    return Response(ExamAttemptDetailSerializer(attempt).data)

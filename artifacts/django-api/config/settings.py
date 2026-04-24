@@ -43,7 +43,6 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -167,10 +166,23 @@ if not DEBUG:
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
     os.environ.get("FRONTEND_URL", "http://localhost:3000"),
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_URLS_REGEX = r"^/api/.*$"
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+    "cookie",
+]
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"

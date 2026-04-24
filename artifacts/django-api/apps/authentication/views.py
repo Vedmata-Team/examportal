@@ -1,6 +1,7 @@
 import hashlib
 import os
 import hmac
+import secrets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -9,27 +10,47 @@ from django.conf import settings
 from .auth import create_session_token
 
 
+def _pbkdf2_hash(password: str, salt: str) -> str:
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 260000, dklen=32)
+    return dk.hex()
+
+
 def hash_password(password: str, salt: str = None) -> str:
     if salt is None:
-        salt = os.urandom(16).hex()
-    import hashlib
-    dk = hashlib.scrypt(password.encode(), salt=salt.encode(), n=16384, r=8, p=1, dklen=64)
-    return f"{salt}:{dk.hex()}"
+        salt = secrets.token_hex(16)
+    try:
+        dk = hashlib.scrypt(password.encode(), salt=salt.encode(), n=16384, r=8, p=1, dklen=64)
+        return f"scrypt:{salt}:{dk.hex()}"
+    except (OSError, ValueError, RuntimeError):
+        # scrypt unavailable (no OpenSSL support) — fall back to PBKDF2
+        return f"pbkdf2:{salt}:{_pbkdf2_hash(password, salt)}"
 
 
 def verify_password(password: str, stored: str) -> bool:
     if not stored:
         return False
     parts = stored.split(":")
-    if len(parts) != 2:
+    if len(parts) == 3:
+        algo, salt, expected = parts
+        if algo == "scrypt":
+            try:
+                dk = hashlib.scrypt(password.encode(), salt=salt.encode(), n=16384, r=8, p=1, dklen=64)
+                return hmac.compare_digest(dk.hex(), expected)
+            except (OSError, ValueError, RuntimeError):
+                return False
+        if algo == "pbkdf2":
+            candidate = _pbkdf2_hash(password, salt)
+            return hmac.compare_digest(candidate, expected)
         return False
-    salt, expected_hash = parts
-    try:
-        dk = hashlib.scrypt(password.encode(), salt=salt.encode(), n=16384, r=8, p=1, dklen=64)
-        candidate = dk.hex()
-        return hmac.compare_digest(candidate, expected_hash)
-    except Exception:
-        return False
+    # legacy format: "salt:hash" (old scrypt without prefix)
+    if len(parts) == 2:
+        salt, expected = parts
+        try:
+            dk = hashlib.scrypt(password.encode(), salt=salt.encode(), n=16384, r=8, p=1, dklen=64)
+            return hmac.compare_digest(dk.hex(), expected)
+        except (OSError, ValueError, RuntimeError):
+            return False
+    return False
 
 
 @api_view(["POST"])

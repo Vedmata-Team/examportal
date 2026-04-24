@@ -31,7 +31,7 @@ export async function getSessionUser(): Promise<User | null> {
 
   const API_BASE = process.env.API_BASE_URL || "http://localhost:8000";
   try {
-    const res = await fetch(`${API_BASE}/api/users/me/`, {
+    const res = await fetch(`${API_BASE}/api/me/`, {
       headers: {
         Cookie: `exam_session=${token}`,
       },

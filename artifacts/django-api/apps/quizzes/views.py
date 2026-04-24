@@ -1,5 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.db.models import Count
 from .models import Quiz, QuizSection, Question
 from .serializers import (
     QuizSerializer, QuizWithDetailsSerializer,
@@ -21,7 +22,9 @@ def quizzes_list(request):
         return err
 
     if request.method == "GET":
-        qs = Quiz.objects.only(
+        qs = Quiz.objects.select_related("chapter").annotate(
+            total_questions_count=Count("sections__questions")
+        ).only(
             "id", "title", "chapter_id", "type", "start_time", "end_time", "created_at"
         )
         chapter_id = request.query_params.get("chapterId")
@@ -101,9 +104,9 @@ def questions_create(request):
         questions = [
             Question(
                 section_id=q["sectionId"],
-                question=q["question"],
+                text=q["question"],
                 options=q["options"],
-                correct_answer=q["correctAnswer"],
+                correct_option=q["correctAnswer"],
                 order_index=q.get("orderIndex", i),
             )
             for i, q in enumerate(data)
@@ -113,9 +116,9 @@ def questions_create(request):
 
     question = Question.objects.create(
         section_id=data["sectionId"],
-        question=data["question"],
+        text=data["question"],
         options=data["options"],
-        correct_answer=data["correctAnswer"],
+        correct_option=data["correctAnswer"],
         order_index=data.get("orderIndex", 0),
     )
     return Response(QuestionSerializer(question).data, status=201)
